@@ -8,7 +8,7 @@
 
 | Область | Инструменты |
 | :--- | :--- |
-| **Языки программирования** | Python (Pandas, NumPy, Matplotlib, SciPy, Seaborn, Plotly), SQL (PostgreSQL) |
+| **Языки программирования** | Python (Pandas, NumPy, Matplotlib, SciPy, Seaborn, Plotly, SQLAlchemy), SQL (PostgreSQL) |
 | **Визуализация и BI** | Power BI, Yandex DataLens, Power Query, Power Pivot, Excel (эксперт) |
 | **Анализ данных** | A/B-тестирование, статистический анализ, предобработка данных, декомпозиция метрик, когортный анализ |
 | **Инструменты** | Jupyter Notebook, PyCharm, Folium |
@@ -26,6 +26,8 @@
 | **Анализ результатов A/B-теста для интернет-магазина** | Оценка корректности проведения A/B-теста, проверка гипотез о различиях в поведении пользователей. | Python (Pandas, NumPy, Matplotlib, SciPy) | [project_6_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_6_preprocessing) |
 | **Анализ поведения пользователей мобильного приложения** | Анализ воронки продаж, исследование результатов A/A/B-теста по смене шрифтов. | Python (Pandas, Matplotlib, Seaborn, SciPy) | [project_7_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_7_preprocessing) |
 | **Анализ рынка заведений общественного питания Москвы** | Исследование рынка общепита: структура заведений по районам, адреса, сетевые и несетевые заведения. Визуализация на карте города. | Python (Pandas, Matplotlib, Seaborn, Plotly, Folium) | [project_8_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_8_preprocessing) |
+| **Анализ поведения пользователей мобильного приложения "Ненужные вещи"** | Анализ поведения пользователей, воронка продаж, исследование результатов A/B-теста. | Python (Pandas, Matplotlib, Seaborn, SciPy, Plotly) | [project_9_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_9_preprocessing) |
+| **Анализ книжной базы данных** | Анализ книжной базы данных с помощью SQL и Python. Написание сложных запросов, объединение таблиц, агрегация данных. | Python (Pandas, SQLAlchemy), PostgreSQL | [project_10_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_10_preprocessing) |
 
 *Все проекты выполнены в рамках обучения в Яндекс.Практикуме.*
 
