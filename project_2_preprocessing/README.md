@@ -44,8 +44,8 @@
 - Jupyter Notebook
 
 ## Как использовать
-1. Убедитесь, что файл `real_estate_data.csv` находится в той же папке, что и ноутбук.
-2. Запустите Jupyter Notebook и откройте файл `project_2_preprocessing_clean_v2.ipynb`.
+1. Откройте ноутбук `02_real_estate_analysis.ipynb` в Jupyter Notebook или Google Colab.
+2. Код автоматически загрузит данные по ссылке, если локальный файл не найден.
 3. Выполняйте ячейки последовательно.
 
 ## Автор
