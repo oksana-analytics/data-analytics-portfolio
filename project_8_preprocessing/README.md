@@ -109,4 +109,4 @@ cd data-analytics-portfolio/08_moscow_restaurants_analysis
 # Убедись, что файл с данными (moscow_places.csv) находится в папке data/
 
 # Запустить Jupyter Notebook
-jupyter notebook 05_business_metrics_analysis.ipynb
+jupyter notebook 08_moscow_restaurants_analysis.ipynb
