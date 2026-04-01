@@ -104,7 +104,7 @@
 ```bash
 # Склонировать репозиторий
 git clone https://github.com/oksana-analytics/data-analytics-portfolio.git
-cd data-analytics-portfolio/05_moscow_restaurants_analysis
+cd data-analytics-portfolio/08_moscow_restaurants_analysis
 
 # Убедись, что файл с данными (moscow_places.csv) находится в папке data/
 
