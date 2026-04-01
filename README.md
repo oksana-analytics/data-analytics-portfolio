@@ -8,23 +8,24 @@
 
 | Область | Инструменты |
 | :--- | :--- |
-| **Языки программирования** | Python (Pandas, NumPy, Matplotlib), SQL (PostgreSQL) |
+| **Языки программирования** | Python (Pandas, NumPy, Matplotlib, SciPy, Seaborn, Plotly), SQL (PostgreSQL) |
 | **Визуализация и BI** | Power BI, Yandex DataLens, Power Query, Power Pivot, Excel (эксперт) |
-| **Анализ данных** | A/B-тестирование, статистический анализ, предобработка данных, декомпозиция метрик |
-| **Инструменты** | Jupyter Notebook, PyCharm |
+| **Анализ данных** | A/B-тестирование, статистический анализ, предобработка данных, декомпозиция метрик, когортный анализ |
+| **Инструменты** | Jupyter Notebook, PyCharm, Folium |
 | **Другое** | 1С, Oracle HR, управление проектами |
 
 ## 📁 Проекты
 
 | Название проекта | Описание | Стек | Ссылка |
 | :--- | :--- | :--- | :--- |
-| **Предобработка данных** | Очистка и подготовка данных для дальнейшего анализа: работа с пропусками, дубликатами, выбросами. | Python (Pandas) | [project_1_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_1_preprocessing) |
-| **Исследовательский анализ данных (EDA)** | Анализ структуры данных, визуализация распределений, поиск взаимосвязей между признаками. | Python (Pandas, Matplotlib) | [project_2_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_2_preprocessing) |
-| **Статистический анализ** | Проверка статистических гипотез, применение критериев для сравнения групп. | Python (SciPy, NumPy) | [project_3_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_3_preprocessing) |
-| **Анализ компьютерных игр** | Исследование исторических данных о продажах игр, выявление закономерностей и прибыльных платформ. | Python (Pandas, Matplotlib) | [project_4_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_4_preprocessing) |
-| **Анализ бизнес-показателей** | Расчет и декомпозиция метрик, анализ убытков, когортный анализ. | Python (Pandas, NumPy, Seaborn) | [project_5_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_5_preprocessing) |
-| **Принятие решений в бизнесе** | Приоритизация гипотез, анализ результатов A/B-тестирования. | Python (Pandas, SciPy) | [project_6_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_6_preprocessing) |
-| **SQL-проект** | Написание сложных SQL-запросов для извлечения данных, объединение таблиц, оконные функции. | PostgreSQL | [project_8_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_8_preprocessing) |
+| **Анализ надежности заемщиков банка** | Анализ влияния семейного положения, дохода и других факторов на возврат кредита. Предобработка данных, категоризация признаков. | Python (Pandas, NumPy) | [project_1_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_1_preprocessing) |
+| **Исследование объявлений о продаже квартир** | Анализ рынка недвижимости Санкт-Петербурга и области: выявление факторов, влияющих на стоимость, определение аномалий. | Python (Pandas, Matplotlib) | [project_2_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_2_preprocessing) |
+| **Статистический анализ данных сервиса аренды самокатов GoFast** | Анализ поведения пользователей, проверка гипотез о влиянии подписки на расстояние поездок и выручку. | Python (Pandas, SciPy) | [project_3_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_3_preprocessing) |
+| **Анализ рынка компьютерных игр** | Исследование исторических данных о продажах игр, выявление закономерностей, определение прибыльных платформ и жанров. | Python (Pandas, Matplotlib, Seaborn) | [project_4_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_4_preprocessing) |
+| **Анализ бизнес-показателей приложения Procrastinate Pro+** | Маркетинговый анализ: расчет LTV, CAC, ROI, когортный анализ, выявление причин убытков. | Python (Pandas, Matplotlib, Seaborn) | [project_5_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_5_preprocessing) |
+| **Анализ результатов A/B-теста для интернет-магазина** | Оценка корректности проведения A/B-теста, проверка гипотез о различиях в поведении пользователей. | Python (Pandas, NumPy, Matplotlib, SciPy) | [project_6_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_6_preprocessing) |
+| **Анализ поведения пользователей мобильного приложения** | Анализ воронки продаж, исследование результатов A/A/B-теста по смене шрифтов. | Python (Pandas, Matplotlib, Seaborn, SciPy) | [project_7_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_7_preprocessing) |
+| **Анализ рынка заведений общественного питания Москвы** | Исследование рынка общепита: структура заведений по районам, адреса, сетевые и несетевые заведения. Визуализация на карте города. | Python (Pandas, Matplotlib, Seaborn, Plotly, Folium) | [project_8_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_8_preprocessing) |
 
 *Все проекты выполнены в рамках обучения в Яндекс.Практикуме.*
 
