@@ -90,6 +90,26 @@ crypto_trading_bot/
 │   ├── demo.env
 │   └── main.env
 └── trading_data/
+
+
+
+Быстрый старт
+Установка зависимостей:
+
+bash
+pip install python-dotenv requests aiohttp pandas numpy scikit-learn TA-Lib openpyxl imbalanced-learn
+Создайте .env:
+
+env
+DEEPSEEK_API_KEY=your_key
+EMAIL_FROM=your_email@yandex.com
+EMAIL_PASSWORD=your_password
+Создайте accounts/demo.env:
+
+env
+ACCOUNT_TYPE=demo
+BYBIT_API_KEY=your_demo_api_key
+BYBIT_SECRET_KEY=your_demo_secret_key
     ├── history_*.json
     ├── coin_stats.json
     └── exports/
