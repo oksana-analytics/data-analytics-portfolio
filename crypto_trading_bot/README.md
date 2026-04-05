@@ -1,205 +1,92 @@
-# 🤖 Crypto Trading Bot v50.0 — 12 стратегий с AI-оптимизацией
+# Crypto Trading Bot v50.0 — 12 стратегий с AI-оптимизацией
 
-Мульти-аккаунтный торговый бот с **адаптивным выбором стратегий** под режим рынка и **AI-оптимизацией** уровней стоп-лосса.
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![Bybit](https://img.shields.io/badge/Bybit-API-blue.svg)](https://www.bybit.com/)
+[![AI](https://img.shields.io/badge/DeepSeek-AI-green.svg)](https://deepseek.com/)
+[![ML](https://img.shields.io/badge/ML-RandomForest-green.svg)](https://scikit-learn.org/)
 
----
+## 🎯 О чём этот проект?
 
-## 🆕 Что нового в версии 50.0
+Это мульти-аккаунтный торговый бот для криптовалютной биржи Bybit, который объединяет **12 торговых стратегий**, **машинное обучение** и **AI-верификацию** для автоматической торговли. Бот адаптируется под режим рынка и оптимизирует параметры сделок через DeepSeek AI.
 
-| Функция | Описание |
-|---------|----------|
-| **12 стратегий** | От MA Crossover до Ichimoku и Mean Reversion |
-| **Адаптивный выбор** | Автоматический подбор стратегий под тренд/боковик/высокую волатильность |
-| **AI оптимизация SL/TP** | DeepSeek рекомендует оптимальные уровни |
-| **StrategyManager** | Взвешенная оценка сигналов от всех стратегий |
-| **Режимы рынка** | 8 режимов: Strong/WEAK Trend, Ranging, High/Low Volatility, Breakout |
+### Что умеет бот?
 
----
-
-## 🏗️ Архитектура
-┌─────────────────────────────────────────────────────────────┐
-│ 12 ТОРГОВЫХ СТРАТЕГИЙ │
-├─────────────────────────────────────────────────────────────┤
-│ Трендовые: MA Crossover, ADX+DI, MACD, Ichimoku │
-│ Контртренд: Bollinger Bands, Mean Reversion, RSI Div │
-│ Пробойные: Volume Breakout, Double Pattern │
-│ Паттерны: Candle Patterns, S/R, Fibonacci │
-└─────────────────────────────────────────────────────────────┘
-↓
-┌─────────────────────────────────────────────────────────────┐
-│ АДАПТИВНЫЙ ВЫБОР (StrategyManager) │
-├─────────────────────────────────────────────────────────────┤
-│ • Определение режима рынка (8 режимов) │
-│ • Активация релевантных стратегий │
-│ • Взвешенная оценка сигналов │
-└─────────────────────────────────────────────────────────────┘
-↓
-┌─────────────────────────────────────────────────────────────┐
-│ AI ОПТИМИЗАЦИЯ (DeepSeek) │
-├─────────────────────────────────────────────────────────────┤
-│ • Верификация сигнала (score 0-1) │
-│ • Рекомендация stop_pct и tp_pct │
-│ • Анализ рыночной ситуации │
-└─────────────────────────────────────────────────────────────┘
-↓
-┌─────────────────────────────────────────────────────────────┐
-│ РИСК-МЕНЕДЖМЕНТ │
-├─────────────────────────────────────────────────────────────┤
-│ • Динамический стоп на основе ATR │
-│ • RR = 1:2 (или рекомендованный AI) │
-│ • Риск: 0.5% (демо) / 0.3% (реал) │
-└─────────────────────────────────────────────────────────────┘
-
+1. **Анализировать 36 криптовалют** — BTC, ETH, SOL, BNB и другие
+2. **Применять 12 стратегий** — от MA Crossover до Ichimoku
+3. **Адаптироваться к рынку** — определяет 8 режимов и выбирает нужные стратегии
+4. **Фильтровать сигналы** — через ML (Random Forest) и AI (DeepSeek)
+5. **Управлять рисками** — динамический стоп-лосс, риск 0.5% на сделку
+6. **Отправлять уведомления** — email на каждую сделку
 
 ---
 
-## 📊 Стратегии и режимы рынка
+## 📁 Архитектура бота
+
+### Компонент 1: 12 торговых стратегий
+
+| Тип | Стратегии |
+|-----|-----------|
+| **Трендовые** | MA Crossover, ADX+DI, MACD, Ichimoku |
+| **Контртрендовые** | Bollinger Bands, Mean Reversion, RSI Divergence |
+| **Пробойные** | Volume Breakout, Double Pattern |
+| **Паттерновые** | Candle Patterns, Support/Resistance, Fibonacci |
+
+### Компонент 2: Адаптивный выбор (StrategyManager)
+
+| Функция | Что делает |
+|---------|------------|
+| Определение режима | Анализирует ADX, волатильность, положение цены |
+| Активация стратегий | Включает только релевантные под текущий режим |
+| Взвешенная оценка | Учитывает confidence, вес и винрейт стратегии |
+
+### Компонент 3: AI оптимизация (DeepSeek)
+
+| Функция | Что делает |
+|---------|------------|
+| Верификация сигнала | Оценивает сделку от 0 до 1 |
+| Оптимизация SL/TP | Рекомендует лучшие уровни стоп-лосса и тейк-профита |
+| Анализ рынка | Учитывает технические индикаторы и баланс |
+
+### Компонент 4: Риск-менеджмент
+
+| Параметр | Значение |
+|----------|----------|
+| Стоп-лосс | 2-8% (динамический через ATR) |
+| Тейк-профит | Стоп × 2 (RR 1:2) |
+| Риск на сделку (демо) | 0.5% от баланса |
+| Риск на сделку (реал) | 0.3% от баланса |
+| Плечо | 2x — 12x (адаптивное) |
+
+---
+
+## 📊 Режимы рынка и стратегии
 
 | Режим рынка | Активные стратегии |
 |-------------|---------------------|
-| 🔥 Сильный тренд вверх | MA, ADX, Ichimoku, Volume |
-| 📉 Сильный тренд вниз | MA, ADX, Ichimoku, Volume |
-| 📈 Слабый тренд вверх | MA, MACD, Ichimoku |
-| 📊 Боковик (Ranging) | Bollinger, Mean Reversion, RSI Div, S/R |
-| ⚡ Высокая волатильность | Volume Breakout, Double Pattern, Candle |
-| 🎯 Пробой (Breakout) | Volume, Double Pattern, MA |
+| Strong Trend Up | MA Crossover, ADX+DI, Ichimoku, Volume Breakout |
+| Strong Trend Down | MA Crossover, ADX+DI, Ichimoku, Volume Breakout |
+| Weak Trend Up | MA Crossover, MACD, Ichimoku |
+| Weak Trend Down | MA Crossover, MACD, Ichimoku |
+| Ranging (боковик) | Bollinger Bands, Mean Reversion, RSI Divergence, S/R Bounce |
+| High Volatility | Volume Breakout, Double Pattern, Candle Patterns |
+| Low Volatility | Bollinger Bands, Fibonacci, S/R Bounce |
+| Breakout (пробой) | Volume Breakout, Double Pattern, MA Crossover |
 
 ---
 
-## 🔄 Как работает адаптация
+## 🔍 Что мы сделали шаг за шагом?
+
+### 1. Создали 12 классов стратегий
+
+Каждая стратегия наследуется от `BaseStrategy` и реализует методы:
+- `analyze(data)` — поиск сигнала
+- `get_signal_strength(data)` — оценка силы сигнала
 
 ```python
-# 1. Определяем режим рынка
-regime = strategy_manager.detect_market_regime(market_data)
-# → STRONG_TREND_UP / RANGING / HIGH_VOLATILITY и т.д.
-
-# 2. Выбираем стратегии под этот режим
-active_strategies = strategy_manager.select_strategies_for_regime(regime)
-
-# 3. Получаем сигналы только от релевантных стратегий
-for strategy in active_strategies:
-    signal = strategy.analyze(data)
-    # Взвешиваем с учетом winrate стратегии
-    score = signal.confidence * strategy.weight * strategy.get_winrate()
-
-# 4. AI оптимизирует уровни
-confirm, score, reason, stop_pct, tp_pct = await ai.confirm(signal, balance)
-
-📈 Ключевые метрики
-Метрика	Значение
-Количество стратегий	12
-Режимов рынка	8
-Монет в сканировании	36
-Винрейт (демо)	~65-70%
-AI порог уверенности	0.5
-ML порог	0.35
-🚀 Быстрый старт
-Установка
-bash
-pip install -r requirements.txt
-Настройка
-Создайте .env файл:
-
-env
-DEEPSEEK_API_KEY=your_key
-EMAIL_FROM=your_email@yandex.com
-EMAIL_PASSWORD=your_password
-Добавьте API ключи в accounts/demo.env:
-
-env
-ACCOUNT_TYPE=demo
-BYBIT_API_KEY=your_demo_api_key
-BYBIT_SECRET_KEY=your_demo_secret_key
-Запуск
-bash
-python trading_bot.py
-📁 Структура кода (новые компоненты)
-text
-crypto_trading_bot/
-├── trading_bot.py              # Основной код (v50.0)
-├── requirements.txt            # Зависимости
-├── README.md                   # Документация
-│
-├── # НОВЫЕ КОМПОНЕНТЫ v50.0:
-├── MarketRegime (Enum)         # 8 режимов рынка
-├── BaseStrategy                # Базовый класс стратегий
-├── StrategyManager             # Оркестрация стратегий
-├── MACrossoverStrategy         # Стратегия 1
-├── ADXStrategy                 # Стратегия 2
-├── RSIDivergenceStrategy       # Стратегия 3
-├── BollingerBandsStrategy      # Стратегия 4
-├── VolumeBreakoutStrategy      # Стратегия 5
-├── CandlePatternStrategy       # Стратегия 6
-├── SupportResistanceStrategy   # Стратегия 7
-├── FibonacciStrategy           # Стратегия 8
-├── MACDStrategy                # Стратегия 9
-├── DoublePatternStrategy       # Стратегия 10
-├── IchimokuStrategy            # Стратегия 11
-└── MeanReversionStrategy       # Стратегия 12
-🛠️ Технологический стек
-Компонент	Технология
-Язык	Python 3.9+
-Торговая стратегия	12 алгоритмов на TA-Lib
-ML фильтр	Random Forest + SMOTE
-AI оптимизация	DeepSeek API
-Адаптация	Определение режимов рынка
-API	Bybit (REST)
-Асинхронность	asyncio + aiohttp
-📝 Пример сигнала с AI оптимизацией
-text
-🎯 BTCUSDT: Лучший сигнал от ADX_DI (режим: STRONG_TREND_UP, уверенность: 0.78)
-🤖 AI: BTCUSDT BUY -> score=0.72, стоп=2.5%, тейк=7.5%
-   ✅ AI оптимизировал уровни: стоп 3.0% → 2.5%, тейк 6.0% → 7.5%
-🎓 Инсайты от разработки v50.0
-Адаптивность критична — одна стратегия не работает на всех режимах рынка
-
-AI оптимизация SL/TP повысила среднюю сделку с +2.8% до +3.4%
-
-Взвешенная оценка стратегий снизила количество ложных сигналов на 30%
-
-Ichimoku в трендовых рынках показал лучшие результаты среди всех стратегий
-
-📞 Контакты
-GitHub: @oksana-analytics
-
-Проект: data-analytics-portfolio
-
-⭐ Если проект полезен, поставьте звездочку!
-
-text
-
----
-
-## 📤 КОМАНДЫ ДЛЯ ОБНОВЛЕНИЯ ПОРТФОЛИО
-
-```bash
-# Переходим в папку портфолио
-cd C:\Users\oxykb\Desktop\data-analytics-portfolio
-
-# Копируем новую версию бота
-copy C:\Users\oxykb\Desktop\crypto_bot\trading_bot.py crypto_trading_bot\
-
-# Обновляем README (скопируйте новый текст выше)
-notepad crypto_trading_bot\README.md
-
-# Отправляем на GitHub
-git add crypto_trading_bot/
-git commit -m "Update trading bot to v50.0 - 12 adaptive strategies + AI optimization"
-git push
-✅ ИТОГИ ДЛЯ ПОРТФОЛИО
-Ваш проект теперь демонстрирует:
-
-Продвинутую архитектуру — 12 стратегий с адаптивным выбором
-
-Интеграцию AI — не только верификация, но и оптимизация параметров
-
-Профессиональный риск-менеджмент — ATR, динамические стопы
-
-ML фильтрацию — Random Forest на 6 признаках
-
-Полный мониторинг — email уведомления, Excel отчеты
-
-Это очень сильный проект для портфолио data analyst! Работодатели увидят, что вы умеете работать с реальными торговыми системами, ML, AI и сложной логикой.
-
-Хотите добавить еще что-то в документацию или создать отдельный файл с примерами торгов?
-
+class MACrossoverStrategy(BaseStrategy):
+    def analyze(self, data):
+        fast_ma = talib.SMA(closes, timeperiod=9)
+        slow_ma = talib.SMA(closes, timeperiod=21)
+        
+        if prev_fast <= prev_slow and curr_fast > curr_slow:
+            return {'action': 'BUY', 'confidence': 0.7}
