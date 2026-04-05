@@ -2,64 +2,32 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![Bybit](https://img.shields.io/badge/Bybit-API-blue.svg)](https://www.bybit.com/)
-[![AI](https://img.shields.io/badge/DeepSeek-AI-green.svg)](https://deepseek.com/)
+[![DeepSeek](https://img.shields.io/badge/DeepSeek-AI-green.svg)](https://deepseek.com/)
 [![ML](https://img.shields.io/badge/ML-RandomForest-green.svg)](https://scikit-learn.org/)
 
-## 🎯 О чём этот проект?
+## О чём этот проект
 
-Это мульти-аккаунтный торговый бот для криптовалютной биржи Bybit, который объединяет **12 торговых стратегий**, **машинное обучение** и **AI-верификацию** для автоматической торговли. Бот адаптируется под режим рынка и оптимизирует параметры сделок через DeepSeek AI.
+Мульти-аккаунтный торговый бот для криптовалютной биржи Bybit с адаптивным выбором стратегий под режим рынка и AI-оптимизацией уровней стоп-лосса и тейк-профита.
 
-### Что умеет бот?
+## Что умеет бот
 
-1. **Анализировать 36 криптовалют** — BTC, ETH, SOL, BNB и другие
-2. **Применять 12 стратегий** — от MA Crossover до Ichimoku
-3. **Адаптироваться к рынку** — определяет 8 режимов и выбирает нужные стратегии
-4. **Фильтровать сигналы** — через ML (Random Forest) и AI (DeepSeek)
-5. **Управлять рисками** — динамический стоп-лосс, риск 0.5% на сделку
-6. **Отправлять уведомления** — email на каждую сделку
+- Анализировать 36 криптовалютных пар
+- Применять 12 торговых стратегий
+- Определять 8 режимов рынка
+- Фильтровать сигналы через ML (Random Forest)
+- Оптимизировать SL/TP через DeepSeek AI
+- Отправлять email-уведомления о сделках
 
----
-
-## 📁 Архитектура бота
-
-### Компонент 1: 12 торговых стратегий
+## 12 торговых стратегий
 
 | Тип | Стратегии |
 |-----|-----------|
-| **Трендовые** | MA Crossover, ADX+DI, MACD, Ichimoku |
-| **Контртрендовые** | Bollinger Bands, Mean Reversion, RSI Divergence |
-| **Пробойные** | Volume Breakout, Double Pattern |
-| **Паттерновые** | Candle Patterns, Support/Resistance, Fibonacci |
+| Трендовые | MA Crossover, ADX+DI, MACD, Ichimoku |
+| Контртрендовые | Bollinger Bands, Mean Reversion, RSI Divergence |
+| Пробойные | Volume Breakout, Double Pattern |
+| Паттерновые | Candle Patterns, Support/Resistance, Fibonacci |
 
-### Компонент 2: Адаптивный выбор (StrategyManager)
-
-| Функция | Что делает |
-|---------|------------|
-| Определение режима | Анализирует ADX, волатильность, положение цены |
-| Активация стратегий | Включает только релевантные под текущий режим |
-| Взвешенная оценка | Учитывает confidence, вес и винрейт стратегии |
-
-### Компонент 3: AI оптимизация (DeepSeek)
-
-| Функция | Что делает |
-|---------|------------|
-| Верификация сигнала | Оценивает сделку от 0 до 1 |
-| Оптимизация SL/TP | Рекомендует лучшие уровни стоп-лосса и тейк-профита |
-| Анализ рынка | Учитывает технические индикаторы и баланс |
-
-### Компонент 4: Риск-менеджмент
-
-| Параметр | Значение |
-|----------|----------|
-| Стоп-лосс | 2-8% (динамический через ATR) |
-| Тейк-профит | Стоп × 2 (RR 1:2) |
-| Риск на сделку (демо) | 0.5% от баланса |
-| Риск на сделку (реал) | 0.3% от баланса |
-| Плечо | 2x — 12x (адаптивное) |
-
----
-
-## 📊 Режимы рынка и стратегии
+## 8 режимов рынка
 
 | Режим рынка | Активные стратегии |
 |-------------|---------------------|
@@ -67,26 +35,51 @@
 | Strong Trend Down | MA Crossover, ADX+DI, Ichimoku, Volume Breakout |
 | Weak Trend Up | MA Crossover, MACD, Ichimoku |
 | Weak Trend Down | MA Crossover, MACD, Ichimoku |
-| Ranging (боковик) | Bollinger Bands, Mean Reversion, RSI Divergence, S/R Bounce |
+| Ranging | Bollinger Bands, Mean Reversion, RSI Divergence, S/R Bounce |
 | High Volatility | Volume Breakout, Double Pattern, Candle Patterns |
 | Low Volatility | Bollinger Bands, Fibonacci, S/R Bounce |
-| Breakout (пробой) | Volume Breakout, Double Pattern, MA Crossover |
+| Breakout | Volume Breakout, Double Pattern, MA Crossover |
 
----
+## Архитектура
 
-## 🔍 Что мы сделали шаг за шагом?
+**1. Технический анализ**
+- 4H (тренд): EMA 20/50, ADX
+- 1H (свинг): RSI, MACD, Williams %R
+- 30M (вход): Канал Дончана, паттерны, объем
 
-### 1. Создали 12 классов стратегий
+**2. ML фильтр (Random Forest)**
+- Признаки: ATR, RSI, MACD, ADX, Williams, направление
+- Порог: ≥ 0.35
 
-Каждая стратегия наследуется от `BaseStrategy` и реализует методы:
-- `analyze(data)` — поиск сигнала
-- `get_signal_strength(data)` — оценка силы сигнала
+**3. AI оптимизация (DeepSeek)**
+- Верификация сигнала (score 0-1)
+- Рекомендация stop_pct и tp_pct
 
-```python
-class MACrossoverStrategy(BaseStrategy):
-    def analyze(self, data):
-        fast_ma = talib.SMA(closes, timeperiod=9)
-        slow_ma = talib.SMA(closes, timeperiod=21)
-        
-        if prev_fast <= prev_slow and curr_fast > curr_slow:
-            return {'action': 'BUY', 'confidence': 0.7}
+**4. Риск-менеджмент**
+- Динамический стоп на основе ATR (2-8%)
+- RR = 1:2
+- Риск: 0.5% (демо) / 0.3% (реал)
+
+## Ключевые метрики
+
+| Метрика | Значение |
+|---------|----------|
+| Количество стратегий | 12 |
+| Режимов рынка | 8 |
+| Монет в сканировании | 36 |
+| Винрейт (демо) | 65-70% |
+| AI порог | 0.5 |
+| ML порог | 0.35 |
+
+## Технологический стек
+
+| Компонент | Технология |
+|-----------|------------|
+| Язык | Python 3.9+ |
+| Стратегии | TA-Lib |
+| ML | Scikit-learn (Random Forest, SMOTE) |
+| AI | DeepSeek API |
+| API | Bybit REST API |
+| Асинхронность | asyncio, aiohttp |
+
+## Структура проекта
