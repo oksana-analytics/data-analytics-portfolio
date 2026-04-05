@@ -1,10 +1,5 @@
 # Crypto Trading Bot v50.0 — 12 стратегий с AI-оптимизацией
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![Bybit](https://img.shields.io/badge/Bybit-API-blue.svg)](https://www.bybit.com/)
-[![DeepSeek](https://img.shields.io/badge/DeepSeek-AI-green.svg)](https://deepseek.com/)
-[![ML](https://img.shields.io/badge/ML-RandomForest-green.svg)](https://scikit-learn.org/)
-
 ## О чём этот проект
 
 Мульти-аккаунтный торговый бот для криптовалютной биржи Bybit с адаптивным выбором стратегий под режим рынка и AI-оптимизацией уровней стоп-лосса и тейк-профита.
@@ -84,6 +79,7 @@
 
 ## Структура проекта
 
+```text
 crypto_trading_bot/
 ├── trading_bot.py
 ├── requirements.txt
@@ -91,70 +87,9 @@ crypto_trading_bot/
 ├── .env
 ├── .gitignore
 ├── accounts/
-│ ├── demo.env
-│ └── main.env
+│   ├── demo.env
+│   └── main.env
 └── trading_data/
-├── history_*.json
-├── coin_stats.json
-└── exports/
-
-text
-
-## Быстрый старт
-
-Установка зависимостей:
-
-```bash
-pip install python-dotenv requests aiohttp pandas numpy scikit-learn TA-Lib openpyxl imbalanced-learn
-Создайте .env:
-
-env
-DEEPSEEK_API_KEY=your_key
-EMAIL_FROM=your_email@yandex.com
-EMAIL_PASSWORD=your_password
-Создайте accounts/demo.env:
-
-env
-ACCOUNT_TYPE=demo
-BYBIT_API_KEY=your_demo_api_key
-BYBIT_SECRET_KEY=your_demo_secret_key
-Запуск:
-
-bash
-python trading_bot.py
-Пример сигнала
-text
-🎯 BTCUSDT: Лучший сигнал от ADX_DI (режим: STRONG_TREND_UP, уверенность: 0.78)
-
-🤖 AI: BTCUSDT BUY -> score=0.72, стоп=2.5%, тейк=7.5%
-
-   ✅ AI оптимизировал уровни: стоп 3.0% → 2.5%, тейк 6.0% → 7.5%
-Инсайты
-Адаптивность критична — одна стратегия не работает на всех режимах рынка
-
-AI оптимизация SL/TP повысила среднюю сделку с +2.8% до +3.4%
-
-Взвешенная оценка стратегий снизила ложные сигналы на 30%
-
-Ichimoku показал лучшие результаты в трендовых рынках
-
-Контакты
-GitHub: @oksana-analytics
-
-Проект: github.com/oksana-analytics/data-analytics-portfolio
-
-text
-
----
-
-## Итог
-
-В этом сообщении нет:
-- лишних слов «я сейчас отправлю»
-- команд для скачивания файлов
-- инструкций «скопируйте и вставьте»
-- объяснений, куда это положить
-
-**Есть только сам файл README.md.**
-Этот ответ сгенерирован AI, только для справки.
-
+    ├── history_*.json
+    ├── coin_stats.json
+    └── exports/
