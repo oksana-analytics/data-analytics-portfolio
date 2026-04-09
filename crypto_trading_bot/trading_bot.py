@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # trading_bot.py - Мульти-аккаунтный торговый бот
-# Версия 52.0 - Полная версия с 12+ стратегиями
+# Версия 53.0 - ПОЛНАЯ РАБОЧАЯ ВЕРСИЯ
 
 import os, sys, time, asyncio, json, requests, hmac, hashlib, numpy as np
 from datetime import datetime, timedelta
@@ -21,7 +21,6 @@ from enum import Enum
 
 warnings.filterwarnings('ignore')
 
-# ML
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import RobustScaler
 from sklearn.model_selection import train_test_split
@@ -60,16 +59,21 @@ EMAIL_FROM = os.getenv('EMAIL_FROM', '')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD', '')
 EMAIL_TO = "oxykbuff11@yandex.com"
 
+# ==================== ПОЛНЫЙ СПИСОК МОНЕТ ====================
 SYMBOLS = [
     "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT",
     "AVAXUSDT", "DOTUSDT", "DOGEUSDT", "TRXUSDT", "LINKUSDT", "POLUSDT",
     "LTCUSDT", "ATOMUSDT", "UNIUSDT", "AAVEUSDT", "ALGOUSDT", "XLMUSDT",
     "VETUSDT", "FILUSDT", "ETCUSDT", "NEARUSDT", "APTUSDT", "ARUSDT",
     "OPUSDT", "ROSEUSDT", "BCHUSDT", "INJUSDT", "SEIUSDT", "SUIUSDT",
-    "RUNEUSDT", "ZROUSDT", "1INCHUSDT", "CROUSDT", "HFTUSDT", "MNTUSDT"
+    "RUNEUSDT", "ZROUSDT", "1INCHUSDT", "CROUSDT", "HFTUSDT", "MNTUSDT",
+    "CAKEUSDT", "LRCUSDT", "CRVUSDT", "DYDXUSDT", "SNXUSDT", "SUSHIUSDT",
+    "WOOUSDT", "HBARUSDT", "LDOUSDT", "MINAUSDT", "ONDOUSDT", "TONUSDT",
+    "WIFUSDT", "ARKMUSDT", "NOTUSDT", "HYPEUSDT", "CTCUSDT", "GALAUSDT",
+    "1000PEPEUSDT"
 ]
 
-# Параметры монет
+# ==================== ПАРАМЕТРЫ МОНЕТ ====================
 MIN_ORDER_SIZES = {}
 ORDER_STEPS = {}
 PRICE_PRECISION = {}
@@ -91,17 +95,12 @@ for s in SYMBOLS:
         ORDER_STEPS[s] = 0.1
         PRICE_PRECISION[s] = 2
         TICK_SIZE[s] = 0.01
-    elif s in ["POLUSDT", "ALGOUSDT", "NEARUSDT", "APTUSDT", "ZROUSDT", "SEIUSDT", "XLMUSDT"]:
+    elif s in ["POLUSDT", "ALGOUSDT", "NEARUSDT", "APTUSDT", "ZROUSDT", "SEIUSDT", "XLMUSDT", "CAKEUSDT", "LRCUSDT", "CRVUSDT", "DYDXUSDT", "SNXUSDT", "SUSHIUSDT", "WOOUSDT", "LDOUSDT", "MINAUSDT", "ONDOUSDT", "ARKMUSDT", "CTCUSDT"]:
         MIN_ORDER_SIZES[s] = 1.0
         ORDER_STEPS[s] = 1.0
         PRICE_PRECISION[s] = 4
         TICK_SIZE[s] = 0.0001
-    elif s == "ADAUSDT":
-        MIN_ORDER_SIZES[s] = 1.0
-        ORDER_STEPS[s] = 1.0
-        PRICE_PRECISION[s] = 5
-        TICK_SIZE[s] = 0.000001
-    elif s in ["XRPUSDT", "TRXUSDT", "DOGEUSDT", "SUIUSDT"]:
+    elif s in ["XRPUSDT", "TRXUSDT", "DOGEUSDT", "SUIUSDT", "ADAUSDT", "HBARUSDT", "TONUSDT", "WIFUSDT", "NOTUSDT", "HYPEUSDT", "GALAUSDT", "1000PEPEUSDT"]:
         MIN_ORDER_SIZES[s] = 10.0
         ORDER_STEPS[s] = 10.0
         PRICE_PRECISION[s] = 5
@@ -150,7 +149,6 @@ COIN_STATS_FILE = os.path.join(DATA_DIR, "coin_stats.json")
 
 # ==================== ФУНКЦИЯ ОТПРАВКИ EMAIL ====================
 def send_email(subject, body, attachment=None):
-    """Отправка email уведомления"""
     if not EMAIL_FROM or not EMAIL_PASSWORD:
         return False
     try:
@@ -158,12 +156,9 @@ def send_email(subject, body, attachment=None):
         msg['From'] = EMAIL_FROM
         msg['To'] = EMAIL_TO
         msg['Subject'] = subject
-        
-        if len(body) > 4000:
-            body = body[:3997] + "..."
-        
+        if len(body) > 30000:
+            body = body[:29997] + "..."
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
-        
         if attachment and os.path.exists(attachment):
             with open(attachment, 'rb') as f:
                 part = MIMEBase('application', 'octet-stream')
@@ -171,7 +166,6 @@ def send_email(subject, body, attachment=None):
                 encoders.encode_base64(part)
                 part.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(attachment)}"')
                 msg.attach(part)
-        
         with smtplib.SMTP_SSL("smtp.yandex.ru", 465) as server:
             server.login(EMAIL_FROM, EMAIL_PASSWORD)
             server.send_message(msg)
@@ -300,16 +294,13 @@ class BybitClient:
         return round(price / tick) * tick
 
     def set_leverage(self, symbol, lev):
-        """Установка кредитного плеча"""
         try:
             lev = int(round(lev))
             lev = max(1, min(20, lev))
-            
             cache_key = f"{symbol}_{lev}"
             if cache_key in self._leverage_cache:
                 if time.time() - self._leverage_cache[cache_key] < 300:
                     return True
-            
             r = self._req("POST", "/v5/position/set-leverage", {
                 "category": "linear",
                 "symbol": symbol,
@@ -319,21 +310,15 @@ class BybitClient:
             })
             if r.get('retCode') == 0:
                 self._leverage_cache[cache_key] = time.time()
-                logger.info(f"⚙️ {self.name}: плечо {symbol} установлено на {lev}x")
                 return True
             else:
-                logger.warning(f"⚠️ {self.name}: ошибка установки плеча {symbol}: {r.get('retMsg')}")
                 return False
-        except Exception as e:
-            logger.error(f"Ошибка set_leverage: {e}")
+        except:
             return False
 
     def order(self, symbol, side, qty, sl=None, tp=None, lev=2):
         qty_str = self.format_qty(symbol, qty)
-        
-        # Устанавливаем плечо перед открытием позиции
         self.set_leverage(symbol, lev)
-        
         p = {
             "category": "linear",
             "symbol": symbol,
@@ -344,12 +329,10 @@ class BybitClient:
             "positionIdx": POSITION_IDX,
             "marketUnit": "quoteCoin"
         }
-        
         if sl:
             p["stopLoss"] = f"{self.round_price(symbol, sl):.{PRICE_PRECISION.get(symbol, 2)}f}"
         if tp:
             p["takeProfit"] = f"{self.round_price(symbol, tp):.{PRICE_PRECISION.get(symbol, 2)}f}"
-        
         r = self._req("POST", "/v5/order/create", p)
         if r.get('retCode') == 0:
             order_id = r.get('result', {}).get('orderId')
@@ -357,16 +340,11 @@ class BybitClient:
         return {"ok": False, "err": r.get('retMsg')}
 
     def set_stop_loss_take_profit(self, symbol, side, sl, tp, position_idx=0):
-        params = {
-            "category": "linear",
-            "symbol": symbol,
-            "positionIdx": position_idx
-        }
+        params = {"category": "linear", "symbol": symbol, "positionIdx": position_idx}
         if sl:
             params["stopLoss"] = f"{self.round_price(symbol, sl):.{PRICE_PRECISION.get(symbol, 2)}f}"
         if tp:
             params["takeProfit"] = f"{self.round_price(symbol, tp):.{PRICE_PRECISION.get(symbol, 2)}f}"
-        
         r = self._req("POST", "/v5/position/set-trading-stop", params)
         if r.get('retCode') == 0:
             return {"ok": True}
@@ -382,11 +360,9 @@ class BybitClient:
         r = self._req("GET", "/v5/position/closed-pnl", params)
         if r.get('retCode') != 0:
             return None
-        
         trades = r.get('result', {}).get('list', [])
         if not trades:
             return None
-        
         if entry_price:
             for trade in trades:
                 if trade.get('symbol') == symbol:
@@ -398,7 +374,6 @@ class BybitClient:
                             'entry': trade_entry,
                             'time': trade.get('updatedTime', 0)
                         }
-        
         for trade in reversed(trades):
             if trade.get('symbol') == symbol:
                 return {
@@ -407,7 +382,6 @@ class BybitClient:
                     'entry': float(trade.get('avgEntryPrice', 0)),
                     'time': trade.get('updatedTime', 0)
                 }
-        
         return None
 
     def get_all_closed_trades(self, hours_back=168):
@@ -462,7 +436,6 @@ class BybitClient:
                 }
         return None
 
-
 # ==================== УПРАВЛЕНИЕ АККАУНТАМИ ====================
 @dataclass
 class Account:
@@ -480,7 +453,6 @@ class Account:
 
     def is_demo(self):
         return self.acc_type == 'demo'
-
 
 class AccountManager:
     def __init__(self):
@@ -543,7 +515,6 @@ class AccountManager:
         for n, c in self.clients.items():
             self.accounts[n].balance = c.balance()
 
-
 # ==================== КЛАСС ДЛЯ АНАЛИЗА МОНЕТ ====================
 class CoinAnalyzer:
     def __init__(self):
@@ -571,26 +542,20 @@ class CoinAnalyzer:
     def update_from_trade(self, trade):
         if trade.get('exit') is None:
             return
-        
         trade_id = trade.get('id')
         if trade_id and trade_id in self.processed_trades:
             return
-        
         exit_time = trade.get('exit_time', '')
         symbol = trade.get('symbol', '')
         entry = trade.get('entry', 0)
         unique_key = f"{symbol}_{entry}_{exit_time[:19]}"
-        
         if unique_key in self.processed_keys:
             return
-        
         if trade_id:
             self.processed_trades.add(trade_id)
         self.processed_keys.add(unique_key)
-        
         symbol = trade['symbol']
         net = trade.get('net', 0)
-        
         if symbol not in self.coin_stats:
             self.coin_stats[symbol] = {
                 'total_trades': 0, 'wins': 0, 'losses': 0,
@@ -598,32 +563,26 @@ class CoinAnalyzer:
                 'winrate': 0.0, 'profit_factor': 0.0,
                 'qualified': False, 'qualified_at': None, 'last_update': None
             }
-        
         stats = self.coin_stats[symbol]
         stats['total_trades'] += 1
-        
         if net > 0:
             stats['wins'] += 1
             stats['total_profit'] += net
         else:
             stats['losses'] += 1
             stats['total_loss'] += abs(net)
-        
         if stats['total_trades'] > 0:
             stats['winrate'] = (stats['wins'] / stats['total_trades']) * 100
-        
         if stats['total_loss'] > 0:
             stats['profit_factor'] = stats['total_profit'] / stats['total_loss']
         else:
             stats['profit_factor'] = stats['total_profit'] if stats['total_profit'] > 0 else 0
-        
         was_qualified = stats.get('qualified', False)
         stats['qualified'] = (
             stats['total_trades'] >= REAL_TRADING_CRITERIA['min_trades_per_coin'] and
             stats['winrate'] >= REAL_TRADING_CRITERIA['min_winrate_per_coin'] and
             stats['profit_factor'] >= REAL_TRADING_CRITERIA['min_profit_factor']
         )
-        
         if not was_qualified and stats['qualified']:
             stats['qualified_at'] = datetime.now().isoformat()
             logger.info(f"🎉 МОНЕТА {symbol} ПРОШЛА КВАЛИФИКАЦИЮ!")
@@ -637,7 +596,6 @@ class CoinAnalyzer:
 Profit Factor: {stats['profit_factor']:.2f}
 ✅ Критерии выполнены!"""
             send_email(f"✅ {symbol} ГОТОВА К РЕАЛЬНОЙ ТОРГОВЛЕ", body)
-        
         stats['last_update'] = datetime.now().isoformat()
         self.save_stats()
 
@@ -650,7 +608,6 @@ Profit Factor: {stats['profit_factor']:.2f}
     def generate_excel_report(self, all_trades):
         if not all_trades:
             return None
-        
         trades_data = []
         for t in all_trades:
             trades_data.append({
@@ -666,16 +623,13 @@ Profit Factor: {stats['profit_factor']:.2f}
                 'adx': t.get('adx', 0), 'williams': t.get('williams', 0),
                 'strategy': t.get('strategy', ''), 'market_regime': t.get('market_regime', ''),
             })
-        
         df_trades = pd.DataFrame(trades_data)
         filename = os.path.join(EXCEL_DIR, f"trades_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
-        
         with pd.ExcelWriter(filename, engine='openpyxl') as writer:
             df_trades.to_excel(writer, sheet_name='Сделки', index=False)
-        
         return filename
 
-
+# ==================== РЕЖИМЫ РЫНКА ====================
 class MarketRegime(Enum):
     STRONG_TREND_UP = "STRONG_TREND_UP"
     WEAK_TREND_UP = "WEAK_TREND_UP"
@@ -686,6 +640,30 @@ class MarketRegime(Enum):
     LOW_VOLATILITY = "LOW_VOLATILITY"
     BREAKOUT = "BREAKOUT"
 
+# ==================== БАЗОВАЯ СТРАТЕГИЯ ====================
+class BaseStrategy:
+    def __init__(self, name: str, weight: float, min_confidence: float = 0.6):
+        self.name = name
+        self.weight = weight
+        self.min_confidence = min_confidence
+        self.total_signals = 0
+        self.win_signals = 0
+    
+    def get_winrate(self) -> float:
+        if self.total_signals == 0:
+            return 0.5
+        return self.win_signals / self.total_signals
+    
+    def update_performance(self, was_winner: bool):
+        self.total_signals += 1
+        if was_winner:
+            self.win_signals += 1
+    
+    def analyze(self, data: Dict) -> Optional[Dict]:
+        raise NotImplementedError
+    
+    def get_signal_strength(self, data: Dict) -> float:
+        raise NotImplementedError
 
 # ==================== СТРАТЕГИЯ 1: MA CROSSOVER ====================
 class MACrossoverStrategy(BaseStrategy):
@@ -698,16 +676,13 @@ class MACrossoverStrategy(BaseStrategy):
         closes = np.array(data['closes'])
         if len(closes) < self.slow_period + 10:
             return None
-        
         fast_ma = talib.SMA(closes, timeperiod=self.fast_period)
         slow_ma = talib.SMA(closes, timeperiod=self.slow_period)
-        
         curr_fast = fast_ma[-1]
         curr_slow = slow_ma[-1]
         prev_fast = fast_ma[-2]
         prev_slow = slow_ma[-2]
         price = closes[-1]
-        
         if prev_fast <= prev_slow and curr_fast > curr_slow:
             confidence = 0.7 + (abs(curr_fast - curr_slow) / price) * 10
             confidence = min(0.95, confidence)
@@ -719,7 +694,6 @@ class MACrossoverStrategy(BaseStrategy):
                 'fast_ma': curr_fast,
                 'slow_ma': curr_slow
             }
-        
         if prev_fast >= prev_slow and curr_fast < curr_slow:
             confidence = 0.7 + (abs(curr_fast - curr_slow) / price) * 10
             confidence = min(0.95, confidence)
@@ -731,22 +705,18 @@ class MACrossoverStrategy(BaseStrategy):
                 'fast_ma': curr_fast,
                 'slow_ma': curr_slow
             }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         closes = np.array(data['closes'])
         if len(closes) < self.slow_period:
             return 0.0
-        
         fast_ma = talib.SMA(closes, timeperiod=self.fast_period)[-1]
         slow_ma = talib.SMA(closes, timeperiod=self.slow_period)[-1]
-        
         if fast_ma > slow_ma:
             return min(0.9, (fast_ma - slow_ma) / closes[-1] * 50)
         else:
             return 0.0
-
 
 # ==================== СТРАТЕГИЯ 2: ADX + DI ====================
 class ADXStrategy(BaseStrategy):
@@ -758,28 +728,22 @@ class ADXStrategy(BaseStrategy):
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
         closes = np.array(data['closes'])
-        
         if len(closes) < self.period + 10:
             return None
-        
         adx = talib.ADX(highs, lows, closes, timeperiod=self.period)
         plus_di = talib.PLUS_DI(highs, lows, closes, timeperiod=self.period)
         minus_di = talib.MINUS_DI(highs, lows, closes, timeperiod=self.period)
-        
         curr_adx = adx[-1]
         curr_plus = plus_di[-1]
         curr_minus = minus_di[-1]
         prev_plus = plus_di[-2] if len(plus_di) > 1 else curr_plus
         prev_minus = minus_di[-2] if len(minus_di) > 1 else curr_minus
-        
         if curr_adx > 25:
             if curr_plus > curr_minus and curr_plus > 25:
                 confidence = 0.6 + (curr_adx - 25) / 100
                 confidence = min(0.9, confidence)
-                
                 if curr_plus > prev_plus:
                     confidence += 0.05
-                
                 return {
                     'action': 'BUY',
                     'confidence': confidence,
@@ -789,14 +753,11 @@ class ADXStrategy(BaseStrategy):
                     'plus_di': curr_plus,
                     'minus_di': curr_minus
                 }
-            
             elif curr_minus > curr_plus and curr_minus > 25:
                 confidence = 0.6 + (curr_adx - 25) / 100
                 confidence = min(0.9, confidence)
-                
                 if curr_minus > prev_minus:
                     confidence += 0.05
-                
                 return {
                     'action': 'SELL',
                     'confidence': confidence,
@@ -806,20 +767,16 @@ class ADXStrategy(BaseStrategy):
                     'plus_di': curr_plus,
                     'minus_di': curr_minus
                 }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
         closes = np.array(data['closes'])
-        
         if len(closes) < self.period:
             return 0.0
-        
         adx = talib.ADX(highs, lows, closes, timeperiod=self.period)[-1]
         return min(0.95, adx / 100)
-
 
 # ==================== СТРАТЕГИЯ 3: RSI DIVERGENCE ====================
 class RSIDivergenceStrategy(BaseStrategy):
@@ -830,21 +787,16 @@ class RSIDivergenceStrategy(BaseStrategy):
     
     def analyze(self, data: Dict) -> Optional[Dict]:
         closes = np.array(data['closes'])
-        
         if len(closes) < self.lookback + 10:
             return None
-        
         rsi = talib.RSI(closes, timeperiod=self.rsi_period)
-        
         price_lows = self._find_swing_lows(closes[-self.lookback:])
         rsi_lows = self._find_swing_lows(rsi[-self.lookback:])
         price_highs = self._find_swing_highs(closes[-self.lookback:])
         rsi_highs = self._find_swing_highs(rsi[-self.lookback:])
-        
         if len(price_lows) >= 2 and len(rsi_lows) >= 2:
             price_low1, price_low2 = price_lows[-2], price_lows[-1]
             rsi_low1, rsi_low2 = rsi_lows[-2], rsi_lows[-1]
-            
             if price_low2 < price_low1 and rsi_low2 > rsi_low1:
                 confidence = 0.75
                 if rsi_low2 < 30:
@@ -857,11 +809,9 @@ class RSIDivergenceStrategy(BaseStrategy):
                     'rsi': rsi[-1],
                     'divergence_type': 'bullish'
                 }
-        
         if len(price_highs) >= 2 and len(rsi_highs) >= 2:
             price_high1, price_high2 = price_highs[-2], price_highs[-1]
             rsi_high1, rsi_high2 = rsi_highs[-2], rsi_highs[-1]
-            
             if price_high2 > price_high1 and rsi_high2 < rsi_high1:
                 confidence = 0.75
                 if rsi_high2 > 70:
@@ -874,7 +824,6 @@ class RSIDivergenceStrategy(BaseStrategy):
                     'rsi': rsi[-1],
                     'divergence_type': 'bearish'
                 }
-        
         return None
     
     def _find_swing_lows(self, arr):
@@ -902,7 +851,6 @@ class RSIDivergenceStrategy(BaseStrategy):
             return (rsi - 70) / 30
         return 0.0
 
-
 # ==================== СТРАТЕГИЯ 4: BOLLINGER BANDS REVERSAL ====================
 class BollingerBandsStrategy(BaseStrategy):
     def __init__(self):
@@ -912,32 +860,23 @@ class BollingerBandsStrategy(BaseStrategy):
     
     def analyze(self, data: Dict) -> Optional[Dict]:
         closes = np.array(data['closes'])
-        
         if len(closes) < self.period + 5:
             return None
-        
-        upper, middle, lower = talib.BBANDS(
-            closes, timeperiod=self.period, nbdevup=self.std_dev, 
-            nbdevdn=self.std_dev, matype=0
-        )
-        
+        upper, middle, lower = talib.BBANDS(closes, timeperiod=self.period, nbdevup=self.std_dev, nbdevdn=self.std_dev, matype=0)
         curr_upper = upper[-1]
         curr_middle = middle[-1]
         curr_lower = lower[-1]
         price = closes[-1]
         prev_price = closes[-2]
-        
         bb_width = (curr_upper - curr_lower) / curr_middle
         prev_width = (upper[-2] - lower[-2]) / middle[-2] if len(middle) > 1 else bb_width
         bb_squeeze = bb_width < prev_width and bb_width < 0.1
-        
         if price <= curr_lower * 1.002 and prev_price > curr_lower:
             confidence = 0.65
             if bb_squeeze:
                 confidence += 0.1
             if curr_middle > curr_lower * 1.05:
                 confidence += 0.05
-            
             return {
                 'action': 'BUY',
                 'confidence': min(0.9, confidence),
@@ -948,14 +887,12 @@ class BollingerBandsStrategy(BaseStrategy):
                 'bb_lower': curr_lower,
                 'bb_squeeze': bb_squeeze
             }
-        
         if price >= curr_upper * 0.998 and prev_price < curr_upper:
             confidence = 0.65
             if bb_squeeze:
                 confidence += 0.1
             if curr_middle < curr_upper * 0.95:
                 confidence += 0.05
-            
             return {
                 'action': 'SELL',
                 'confidence': min(0.9, confidence),
@@ -966,24 +903,19 @@ class BollingerBandsStrategy(BaseStrategy):
                 'bb_lower': curr_lower,
                 'bb_squeeze': bb_squeeze
             }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         closes = np.array(data['closes'])
         if len(closes) < self.period:
             return 0.0
-        
         upper, middle, lower = talib.BBANDS(closes, timeperiod=self.period, nbdevup=self.std_dev, nbdevdn=self.std_dev, matype=0)
         price = closes[-1]
-        
         if price <= lower[-1]:
             return (lower[-1] - price) / lower[-1] + 0.5
         elif price >= upper[-1]:
             return (price - upper[-1]) / price + 0.5
-        
         return 0.0
-
 
 # ==================== СТРАТЕГИЯ 5: VOLUME BREAKOUT ====================
 class VolumeBreakoutStrategy(BaseStrategy):
@@ -995,29 +927,22 @@ class VolumeBreakoutStrategy(BaseStrategy):
     def analyze(self, data: Dict) -> Optional[Dict]:
         closes = np.array(data['closes'])
         volumes = np.array(data['volumes'])
-        
         if len(volumes) < self.volume_ma_period + 5:
             return None
-        
         volume_ma = talib.SMA(volumes, timeperiod=self.volume_ma_period)
         curr_volume = volumes[-1]
         avg_volume = volume_ma[-1]
-        
         if curr_volume < avg_volume * self.volume_multiplier:
             return None
-        
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
-        
         resistance = np.max(highs[-20:-5]) if len(highs) > 20 else highs[-1]
         support = np.min(lows[-20:-5]) if len(lows) > 20 else lows[-1]
         price = closes[-1]
-        
         if price > resistance and curr_volume > avg_volume * 1.5:
             confidence = 0.7
             volume_ratio = curr_volume / avg_volume
             confidence += min(0.2, (volume_ratio - 1.5) / 5)
-            
             return {
                 'action': 'BUY',
                 'confidence': min(0.95, confidence),
@@ -1026,12 +951,10 @@ class VolumeBreakoutStrategy(BaseStrategy):
                 'resistance': resistance,
                 'volume_ratio': volume_ratio
             }
-        
         if price < support and curr_volume > avg_volume * 1.5:
             confidence = 0.7
             volume_ratio = curr_volume / avg_volume
             confidence += min(0.2, (volume_ratio - 1.5) / 5)
-            
             return {
                 'action': 'SELL',
                 'confidence': min(0.95, confidence),
@@ -1040,21 +963,17 @@ class VolumeBreakoutStrategy(BaseStrategy):
                 'support': support,
                 'volume_ratio': volume_ratio
             }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         volumes = np.array(data['volumes'])
         if len(volumes) < self.volume_ma_period:
             return 0.0
-        
         volume_ma = talib.SMA(volumes, timeperiod=self.volume_ma_period)[-1]
         if volume_ma == 0:
             return 0.0
-        
         volume_ratio = volumes[-1] / volume_ma
         return min(0.95, (volume_ratio - 1) / 3)
-
 
 # ==================== СТРАТЕГИЯ 6: CANDLE PATTERNS ====================
 class CandlePatternStrategy(BaseStrategy):
@@ -1066,10 +985,8 @@ class CandlePatternStrategy(BaseStrategy):
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
         closes = np.array(data['closes'])
-        
         if len(closes) < 10:
             return None
-        
         engulfing = talib.CDLENGULFING(opens, highs, lows, closes)
         if engulfing[-1] == 100:
             return {
@@ -1079,7 +996,6 @@ class CandlePatternStrategy(BaseStrategy):
                 'strategy': self.name,
                 'pattern': 'BULLISH_ENGULFING'
             }
-        
         hammer = talib.CDLHAMMER(opens, highs, lows, closes)
         if hammer[-1] != 0:
             confidence = 0.65 if abs(hammer[-1]) == 100 else 0.55
@@ -1090,7 +1006,6 @@ class CandlePatternStrategy(BaseStrategy):
                 'strategy': self.name,
                 'pattern': 'HAMMER'
             }
-        
         morning_star = talib.CDLMORNINGSTAR(opens, highs, lows, closes)
         if morning_star[-1] != 0:
             return {
@@ -1100,7 +1015,6 @@ class CandlePatternStrategy(BaseStrategy):
                 'strategy': self.name,
                 'pattern': 'MORNING_STAR'
             }
-        
         if engulfing[-1] == -100:
             return {
                 'action': 'SELL',
@@ -1109,7 +1023,6 @@ class CandlePatternStrategy(BaseStrategy):
                 'strategy': self.name,
                 'pattern': 'BEARISH_ENGULFING'
             }
-        
         hanging_man = talib.CDLHANGINGMAN(opens, highs, lows, closes)
         if hanging_man[-1] != 0:
             confidence = 0.65 if abs(hanging_man[-1]) == 100 else 0.55
@@ -1120,7 +1033,6 @@ class CandlePatternStrategy(BaseStrategy):
                 'strategy': self.name,
                 'pattern': 'HANGING_MAN'
             }
-        
         evening_star = talib.CDLEVENINGSTAR(opens, highs, lows, closes)
         if evening_star[-1] != 0:
             return {
@@ -1130,25 +1042,20 @@ class CandlePatternStrategy(BaseStrategy):
                 'strategy': self.name,
                 'pattern': 'EVENING_STAR'
             }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         closes = np.array(data['closes'])
         if len(closes) < 20:
             return 0.0
-        
         price = closes[-1]
         recent_high = max(closes[-20:])
         recent_low = min(closes[-20:])
-        
         if price > recent_high * 0.95:
             return 0.7
         elif price < recent_low * 1.05:
             return 0.7
-        
         return 0.5
-
 
 # ==================== СТРАТЕГИЯ 7: SUPPORT RESISTANCE ====================
 class SupportResistanceStrategy(BaseStrategy):
@@ -1160,22 +1067,17 @@ class SupportResistanceStrategy(BaseStrategy):
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
         closes = np.array(data['closes'])
-        
         if len(closes) < self.lookback:
             return None
-        
         levels = self._find_sr_levels(highs, lows, closes)
         price = closes[-1]
-        
         for level in levels:
             if level['type'] == 'support' and abs(price - level['price']) / price < 0.005:
                 confidence = 0.7
                 if level['strength'] > 2:
                     confidence += 0.1
-                
                 if closes[-1] > closes[-2]:
                     confidence += 0.05
-                
                 return {
                     'action': 'BUY',
                     'confidence': min(0.9, confidence),
@@ -1184,15 +1086,12 @@ class SupportResistanceStrategy(BaseStrategy):
                     'level': level['price'],
                     'level_type': 'support'
                 }
-            
             elif level['type'] == 'resistance' and abs(price - level['price']) / price < 0.005:
                 confidence = 0.7
                 if level['strength'] > 2:
                     confidence += 0.1
-                
                 if closes[-1] < closes[-2]:
                     confidence += 0.05
-                
                 return {
                     'action': 'SELL',
                     'confidence': min(0.9, confidence),
@@ -1201,27 +1100,15 @@ class SupportResistanceStrategy(BaseStrategy):
                     'level': level['price'],
                     'level_type': 'resistance'
                 }
-        
         return None
     
     def _find_sr_levels(self, highs, lows, closes):
         levels = []
-        
         for i in range(5, len(closes) - 5):
             if highs[i] > highs[i-1] and highs[i] > highs[i-2] and highs[i] > highs[i+1] and highs[i] > highs[i+2]:
-                levels.append({
-                    'price': highs[i],
-                    'type': 'resistance',
-                    'strength': 1
-                })
-            
+                levels.append({'price': highs[i], 'type': 'resistance', 'strength': 1})
             if lows[i] < lows[i-1] and lows[i] < lows[i-2] and lows[i] < lows[i+1] and lows[i] < lows[i+2]:
-                levels.append({
-                    'price': lows[i],
-                    'type': 'support',
-                    'strength': 1
-                })
-        
+                levels.append({'price': lows[i], 'type': 'support', 'strength': 1})
         grouped = []
         for level in levels:
             found = False
@@ -1232,25 +1119,20 @@ class SupportResistanceStrategy(BaseStrategy):
                     break
             if not found:
                 grouped.append(level)
-        
         return grouped
     
     def get_signal_strength(self, data: Dict) -> float:
         closes = np.array(data['closes'])
         if len(closes) < self.lookback:
             return 0.0
-        
         price = closes[-1]
         recent_high = max(closes[-self.lookback:])
         recent_low = min(closes[-self.lookback:])
-        
         if abs(price - recent_high) / recent_high < 0.01:
             return 0.8
         elif abs(price - recent_low) / recent_low < 0.01:
             return 0.8
-        
         return 0.0
-
 
 # ==================== СТРАТЕГИЯ 8: FIBONACCI ====================
 class FibonacciStrategy(BaseStrategy):
@@ -1262,17 +1144,13 @@ class FibonacciStrategy(BaseStrategy):
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
         closes = np.array(data['closes'])
-        
         if len(closes) < 50:
             return None
-        
         high = np.max(highs[-50:])
         low = np.min(lows[-50:])
         price = closes[-1]
-        
         is_uptrend = closes[-1] > closes[-20]
         diff = high - low
-        
         for level in self.fib_levels:
             if is_uptrend:
                 fib_price = high - diff * level
@@ -1280,7 +1158,6 @@ class FibonacciStrategy(BaseStrategy):
                     confidence = 0.65
                     if level == 0.618 or level == 0.786:
                         confidence += 0.1
-                    
                     return {
                         'action': 'BUY',
                         'confidence': min(0.85, confidence),
@@ -1295,7 +1172,6 @@ class FibonacciStrategy(BaseStrategy):
                     confidence = 0.65
                     if level == 0.618 or level == 0.786:
                         confidence += 0.1
-                    
                     return {
                         'action': 'SELL',
                         'confidence': min(0.85, confidence),
@@ -1304,12 +1180,10 @@ class FibonacciStrategy(BaseStrategy):
                         'fib_level': level,
                         'fib_price': fib_price
                     }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         return 0.5
-
 
 # ==================== СТРАТЕГИЯ 9: MACD CROSSOVER ====================
 class MACDStrategy(BaseStrategy):
@@ -1321,27 +1195,19 @@ class MACDStrategy(BaseStrategy):
     
     def analyze(self, data: Dict) -> Optional[Dict]:
         closes = np.array(data['closes'])
-        
         if len(closes) < self.slow + self.signal + 5:
             return None
-        
-        macd, signal, hist = talib.MACD(
-            closes, fastperiod=self.fast, slowperiod=self.slow, 
-            signalperiod=self.signal
-        )
-        
+        macd, signal, hist = talib.MACD(closes, fastperiod=self.fast, slowperiod=self.slow, signalperiod=self.signal)
         curr_macd = macd[-1]
         curr_signal = signal[-1]
         prev_macd = macd[-2]
         prev_signal = signal[-2]
         curr_hist = hist[-1]
         prev_hist = hist[-2]
-        
         if prev_macd <= prev_signal and curr_macd > curr_signal:
             confidence = 0.65
             if curr_hist > 0 and curr_hist > prev_hist:
                 confidence += 0.1
-            
             return {
                 'action': 'BUY',
                 'confidence': min(0.9, confidence),
@@ -1351,12 +1217,10 @@ class MACDStrategy(BaseStrategy):
                 'signal': curr_signal,
                 'histogram': curr_hist
             }
-        
         if prev_macd >= prev_signal and curr_macd < curr_signal:
             confidence = 0.65
             if curr_hist < 0 and curr_hist < prev_hist:
                 confidence += 0.1
-            
             return {
                 'action': 'SELL',
                 'confidence': min(0.9, confidence),
@@ -1366,20 +1230,14 @@ class MACDStrategy(BaseStrategy):
                 'signal': curr_signal,
                 'histogram': curr_hist
             }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         closes = np.array(data['closes'])
         if len(closes) < self.slow:
             return 0.0
-        
-        macd, signal, hist = talib.MACD(
-            closes, fastperiod=self.fast, slowperiod=self.slow, signalperiod=self.signal
-        )
-        
+        macd, signal, hist = talib.MACD(closes, fastperiod=self.fast, slowperiod=self.slow, signalperiod=self.signal)
         return min(0.9, abs(hist[-1]) / closes[-1] * 100)
-
 
 # ==================== СТРАТЕГИЯ 10: DOUBLE TOP/BOTTOM ====================
 class DoublePatternStrategy(BaseStrategy):
@@ -1391,10 +1249,8 @@ class DoublePatternStrategy(BaseStrategy):
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
         closes = np.array(data['closes'])
-        
         if len(highs) < self.lookback:
             return None
-        
         peaks = self._find_peaks(highs[-self.lookback:])
         if len(peaks) >= 2:
             peak1, peak2 = peaks[-2], peaks[-1]
@@ -1408,7 +1264,6 @@ class DoublePatternStrategy(BaseStrategy):
                         'strategy': self.name,
                         'pattern': 'DOUBLE_TOP'
                     }
-        
         troughs = self._find_troughs(lows[-self.lookback:])
         if len(troughs) >= 2:
             trough1, trough2 = troughs[-2], troughs[-1]
@@ -1422,7 +1277,6 @@ class DoublePatternStrategy(BaseStrategy):
                         'strategy': self.name,
                         'pattern': 'DOUBLE_BOTTOM'
                     }
-        
         return None
     
     def _find_peaks(self, arr):
@@ -1442,7 +1296,6 @@ class DoublePatternStrategy(BaseStrategy):
     def get_signal_strength(self, data: Dict) -> float:
         return 0.7
 
-
 # ==================== СТРАТЕГИЯ 11: ICHIMOKU ====================
 class IchimokuStrategy(BaseStrategy):
     def __init__(self):
@@ -1455,23 +1308,17 @@ class IchimokuStrategy(BaseStrategy):
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
         closes = np.array(data['closes'])
-        
         if len(closes) < self.senkou_b + 10:
             return None
-        
         tenkan = (np.max(highs[-self.tenkan:]) + np.min(lows[-self.tenkan:])) / 2
         kijun = (np.max(highs[-self.kijun:]) + np.min(lows[-self.kijun:])) / 2
-        
         senkou_a = (tenkan + kijun) / 2
         senkou_b = (np.max(highs[-self.senkou_b:]) + np.min(lows[-self.senkou_b:])) / 2
-        
         price = closes[-1]
-        
         if price > senkou_a and price > senkou_b and tenkan > kijun:
             confidence = 0.7
             if senkou_a > senkou_b:
                 confidence += 0.1
-            
             return {
                 'action': 'BUY',
                 'confidence': min(0.9, confidence),
@@ -1482,12 +1329,10 @@ class IchimokuStrategy(BaseStrategy):
                 'senkou_a': senkou_a,
                 'senkou_b': senkou_b
             }
-        
         if price < senkou_a and price < senkou_b and tenkan < kijun:
             confidence = 0.7
             if senkou_a < senkou_b:
                 confidence += 0.1
-            
             return {
                 'action': 'SELL',
                 'confidence': min(0.9, confidence),
@@ -1498,16 +1343,13 @@ class IchimokuStrategy(BaseStrategy):
                 'senkou_a': senkou_a,
                 'senkou_b': senkou_b
             }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         closes = np.array(data['closes'])
         if len(closes) < self.senkou_b:
             return 0.0
-        
         return 0.6
-
 
 # ==================== СТРАТЕГИЯ 12: MEAN REVERSION ====================
 class MeanReversionStrategy(BaseStrategy):
@@ -1519,24 +1361,18 @@ class MeanReversionStrategy(BaseStrategy):
     
     def analyze(self, data: Dict) -> Optional[Dict]:
         closes = np.array(data['closes'])
-        
         if len(closes) < self.period + 5:
             return None
-        
         mean = np.mean(closes[-self.period:])
         std = np.std(closes[-self.period:])
-        
         if std == 0:
             return None
-        
         zscore = (closes[-1] - mean) / std
         prev_zscore = (closes[-2] - mean) / std if len(closes) > self.period + 1 else zscore
-        
         if zscore < -self.entry_zscore and prev_zscore < -self.entry_zscore:
             confidence = 0.6
             if zscore < -2.5:
                 confidence += 0.1
-            
             return {
                 'action': 'BUY',
                 'confidence': min(0.85, confidence),
@@ -1546,12 +1382,10 @@ class MeanReversionStrategy(BaseStrategy):
                 'mean': mean,
                 'std': std
             }
-        
         if zscore > self.entry_zscore and prev_zscore > self.entry_zscore:
             confidence = 0.6
             if zscore > 2.5:
                 confidence += 0.1
-            
             return {
                 'action': 'SELL',
                 'confidence': min(0.85, confidence),
@@ -1561,49 +1395,18 @@ class MeanReversionStrategy(BaseStrategy):
                 'mean': mean,
                 'std': std
             }
-        
         return None
     
     def get_signal_strength(self, data: Dict) -> float:
         closes = np.array(data['closes'])
         if len(closes) < self.period:
             return 0.0
-        
         mean = np.mean(closes[-self.period:])
         std = np.std(closes[-self.period:])
-        
         if std == 0:
             return 0.0
-        
         zscore = abs((closes[-1] - mean) / std)
         return min(0.9, zscore / 3)
-
-
-# ==================== БАЗОВАЯ СТРАТЕГИЯ (ДОЛЖНА БЫТЬ ПОСЛЕ ВСЕХ СТРАТЕГИЙ) ====================
-class BaseStrategy:
-    def __init__(self, name: str, weight: float, min_confidence: float = 0.6):
-        self.name = name
-        self.weight = weight
-        self.min_confidence = min_confidence
-        self.total_signals = 0
-        self.win_signals = 0
-    
-    def get_winrate(self) -> float:
-        if self.total_signals == 0:
-            return 0.5
-        return self.win_signals / self.total_signals
-    
-    def update_performance(self, was_winner: bool):
-        self.total_signals += 1
-        if was_winner:
-            self.win_signals += 1
-    
-    def analyze(self, data: Dict) -> Optional[Dict]:
-        raise NotImplementedError
-    
-    def get_signal_strength(self, data: Dict) -> float:
-        raise NotImplementedError
-
 
 # ==================== МЕНЕДЖЕР СТРАТЕГИЙ ====================
 class StrategyManager:
@@ -1634,21 +1437,15 @@ class StrategyManager:
         closes = np.array(data['closes'])
         highs = np.array(data['highs'])
         lows = np.array(data['lows'])
-        
         if len(closes) < 50:
             return MarketRegime.RANGING
-        
         returns = np.diff(np.log(closes))
         volatility = np.std(returns) * np.sqrt(365)
-        
         sma20 = talib.SMA(closes, timeperiod=20)
         sma50 = talib.SMA(closes, timeperiod=50)
-        
         price_vs_sma20 = (closes[-1] - sma20[-1]) / sma20[-1]
         price_vs_sma50 = (closes[-1] - sma50[-1]) / sma50[-1]
-        
         adx = talib.ADX(highs, lows, closes, timeperiod=14)[-1]
-        
         if adx > 40:
             if price_vs_sma50 > 0.05:
                 return MarketRegime.STRONG_TREND_UP
@@ -1659,18 +1456,15 @@ class StrategyManager:
                 return MarketRegime.WEAK_TREND_UP
             elif price_vs_sma20 < -0.02:
                 return MarketRegime.WEAK_TREND_DOWN
-        
         bb_upper, bb_middle, bb_lower = talib.BBANDS(closes, timeperiod=20, nbdevup=2, nbdevdn=2)
         if closes[-1] > bb_upper[-1] and volatility > 0.5:
             return MarketRegime.BREAKOUT
         elif closes[-1] < bb_lower[-1] and volatility > 0.5:
             return MarketRegime.BREAKOUT
-        
         if volatility > 0.8:
             return MarketRegime.HIGH_VOLATILITY
         elif volatility < 0.3:
             return MarketRegime.LOW_VOLATILITY
-        
         return MarketRegime.RANGING
     
     def select_strategies_for_regime(self, regime: MarketRegime) -> List[str]:
@@ -1679,12 +1473,11 @@ class StrategyManager:
             MarketRegime.STRONG_TREND_DOWN: ['MA_CROSSOVER', 'ADX_DI', 'ICHIMOKU', 'VOLUME_BREAKOUT'],
             MarketRegime.WEAK_TREND_UP: ['MA_CROSSOVER', 'MACD_CROSSOVER', 'ICHIMOKU'],
             MarketRegime.WEAK_TREND_DOWN: ['MA_CROSSOVER', 'MACD_CROSSOVER', 'ICHIMOKU'],
-            MarketRegime.RANGING: ['BOLLINGER_REVERSAL', 'MEAN_REVERSION', 'RSI_DIVERGENCE', 'SR_BOUNCE'],
+            MarketRegime.RANGING: ['BOLLINGER_REVERSAL', 'MEAN_REVERSION', 'RSI_DIVERGENCE', 'SUPPORT_RESISTANCE'],
             MarketRegime.HIGH_VOLATILITY: ['VOLUME_BREAKOUT', 'DOUBLE_PATTERN', 'CANDLE_PATTERNS'],
-            MarketRegime.LOW_VOLATILITY: ['BOLLINGER_REVERSAL', 'FIBONACCI', 'SR_BOUNCE'],
+            MarketRegime.LOW_VOLATILITY: ['BOLLINGER_REVERSAL', 'FIBONACCI', 'SUPPORT_RESISTANCE'],
             MarketRegime.BREAKOUT: ['VOLUME_BREAKOUT', 'DOUBLE_PATTERN', 'MA_CROSSOVER']
         }
-        
         selected = strategy_map.get(regime, ['MA_CROSSOVER', 'RSI_DIVERGENCE'])
         logger.info(f"📊 Режим рынка: {regime.value}, выбрано стратегий: {len(selected)}")
         return selected
@@ -1692,14 +1485,11 @@ class StrategyManager:
     def get_best_signal(self, data: Dict, symbol: str) -> Optional[Dict]:
         self.market_regime = self.detect_market_regime(data)
         self.active_strategies = self.select_strategies_for_regime(self.market_regime)
-        
         best_signal = None
         best_score = 0
-        
         for strategy in self.strategies:
             if strategy.name not in self.active_strategies:
                 continue
-            
             signal = strategy.analyze(data)
             if signal and signal['confidence'] >= strategy.min_confidence:
                 weight = strategy.weight
@@ -1707,20 +1497,15 @@ class StrategyManager:
                     weight *= 0.5
                 elif signal['action'] == 'SELL' and self.market_regime in [MarketRegime.STRONG_TREND_UP, MarketRegime.WEAK_TREND_UP]:
                     weight *= 0.5
-                
                 score = signal['confidence'] * weight * strategy.get_winrate()
-                
                 if score > best_score:
                     best_score = score
                     best_signal = signal
                     best_signal['total_score'] = score
                     best_signal['market_regime'] = self.market_regime.value
-        
         if best_signal:
             logger.info(f"🎯 {symbol}: Лучший сигнал от {best_signal['strategy']} (режим: {self.market_regime.value}, уверенность: {best_signal['confidence']:.2f})")
-        
         return best_signal
-
 
 # ==================== ML СИСТЕМА ====================
 class MLSystem:
@@ -1736,7 +1521,6 @@ class MLSystem:
             highs = market['highs']
             lows = market['lows']
             price = closes[-1]
-
             features = []
             atr = talib.ATR(np.array(highs), np.array(lows), np.array(closes), timeperiod=14)
             features.append(atr[-1] / price if price > 0 else 0)
@@ -1763,28 +1547,21 @@ class MLSystem:
             if features is None: continue
             X.append(features)
             y.append(1 if trade.get('net', 0) > 0 else 0)
-
         if len(X) < TRADING_MODE['ml_min_closed_trades']:
             return False
-
         X = np.array(X)
         y = np.array(y)
         X_scaled = self.scaler.fit_transform(X)
-
         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-
         if IMBLEARN:
             try:
                 smote = SMOTE(random_state=42)
                 X_train, y_train = smote.fit_resample(X_train, y_train)
             except: pass
-
         self.classifier = RandomForestClassifier(n_estimators=100, max_depth=6, random_state=42, class_weight='balanced')
         self.classifier.fit(X_train, y_train)
-
         y_pred = self.classifier.predict(X_test)
         self.metrics['f1'] = f1_score(y_test, y_pred, zero_division=0)
-
         self.trained = True
         logger.info(f"ML обучен: F1={self.metrics['f1']:.3f}")
         return True
@@ -1798,7 +1575,6 @@ class MLSystem:
         features_scaled = self.scaler.transform([features])
         proba = self.classifier.predict_proba(features_scaled)[0]
         return proba[1] if len(proba) == 2 else proba[0]
-
 
 # ==================== AI СИСТЕМА ====================
 class AISystem:
@@ -1829,43 +1605,34 @@ class AISystem:
         try:
             cleaned_text = re.sub(r'```json\s*', '', response_text)
             cleaned_text = re.sub(r'```\s*', '', cleaned_text)
-            
             json_match = re.search(r'\{[^{}]*"score"\s*:\s*[\d.]+[^{}]*\}', cleaned_text, re.DOTALL)
             if not json_match:
                 json_match = re.search(r'\{.*\}', cleaned_text, re.DOTALL)
-            
             if json_match:
                 result = json.loads(json_match.group())
                 score = result.get('score') or result.get('confidence_score')
-                
                 if score is not None:
                     confidence_score = max(0.0, min(1.0, float(score)))
                     reason = result.get('reason', '')
                     recommended_stop_pct = result.get('recommended_stop_pct')
                     recommended_tp_pct = result.get('recommended_tp_pct')
-                    
                     if confidence_score >= TRADING_MODE['ai_confidence_threshold']:
                         logger.info(f"✅ AI уверенность: {confidence_score:.2f}")
                         if recommended_stop_pct:
                             logger.info(f"   AI рекомендует стоп: {recommended_stop_pct:.1f}%, тейк: {recommended_tp_pct:.1f}%")
-                    
                     return {
                         'score': confidence_score,
                         'reason': reason,
                         'recommended_stop_pct': recommended_stop_pct,
                         'recommended_tp_pct': recommended_tp_pct
                     }
-                
                 return {'score': 0.5, 'reason': 'Нет оценки', 'recommended_stop_pct': None, 'recommended_tp_pct': None}
-            
             number_match = re.search(r'(\d+\.?\d*)', response_text)
             if number_match:
                 num_value = float(number_match.group(1))
                 confidence_score = num_value / 100.0 if num_value > 1 else num_value
                 return {'score': max(0.0, min(1.0, confidence_score)), 'reason': 'Извлечено из текста', 'recommended_stop_pct': None, 'recommended_tp_pct': None}
-            
             return {'score': 0.5, 'reason': 'Не удалось распарсить', 'recommended_stop_pct': None, 'recommended_tp_pct': None}
-            
         except Exception as e:
             logger.error(f"Ошибка парсинга AI: {e}")
             return {'score': 0.5, 'reason': f"Ошибка: {e}", 'recommended_stop_pct': None, 'recommended_tp_pct': None}
@@ -1881,10 +1648,8 @@ class AISystem:
     async def confirm(self, signal, account_balance):
         if not self.enabled:
             return True, 0.5, "AI отключён", None, None
-
         if account_balance <= 0.01:
             return True, 0.5, "Баланс ниже минимума", None, None
-
         cache_key = self.get_cache_key(signal)
         if cache_key in self.cache:
             entry = self.cache[cache_key]
@@ -1892,66 +1657,66 @@ class AISystem:
             if datetime.now() - cache_time < timedelta(minutes=10):
                 logger.info(f"🔄 Используем кэш AI для {signal['symbol']}")
                 return entry['confirm'], entry['score'], entry.get('reason', ''), entry.get('stop_pct'), entry.get('tp_pct')
-
         base_stop_pct = signal.get('stop_pct', 0.03)
         base_tp_pct = signal.get('tp_pct', 0.06)
+        prompt = f"""Ты профессиональный криптотрейдер с 10-летним опытом. Оцени торговый сигнал по шкале 0-1.
 
-        prompt = f"""Оцени торговый сигнал и ПРЕДЛОЖИ ОПТИМАЛЬНЫЕ УРОВНИ стоп-лосс и тейк-профит.
+## ДАННЫЕ СИГНАЛА:
+- Монета: {signal['symbol']}
+- Действие: {signal['action']}
+- Текущая цена: ${signal['price']:.6f}
+- Стратегия: {signal.get('strategy', 'UNKNOWN')}
+- Режим рынка: {signal.get('market_regime', 'UNKNOWN')}
 
-Монета: {signal['symbol']}
-Действие: {signal['action']}
-Текущая цена: ${signal['price']:.6f}
-Стратегия: {signal.get('strategy', 'UNKNOWN')}
-Режим рынка: {signal.get('market_regime', 'UNKNOWN')}
-
-ТЕХНИЧЕСКИЕ ДАННЫЕ:
+## ТЕХНИЧЕСКИЙ АНАЛИЗ:
 - Тренд (4H): {signal.get('trend', 'NEUTRAL')}
-- RSI: {signal.get('rsi', 50):.1f}
-- ADX: {signal.get('adx', 25):.0f}
-- Williams %R: {signal.get('williams', -50):.0f}
+- RSI (14): {signal.get('rsi', 50):.1f} (0-100, <30 перепродан, >70 перекуплен)
+- ADX (14): {signal.get('adx', 25):.0f} (<25 нет тренда, 25-50 тренд, >50 сильный тренд)
+- Williams %R: {signal.get('williams', -50):.0f} (0-20 перекуплен, -80...-100 перепродан)
 
-БАЗОВЫЕ УРОВНИ:
+## РИСК-МЕНЕДЖМЕНТ:
+- Баланс: ${account_balance:.2f}
+- Риск на сделку: 0.5%
 - Базовый стоп: {base_stop_pct*100:.1f}%
 - Базовый тейк: {base_tp_pct*100:.1f}%
+- Плечо: {signal.get('lev', 2)}x
 
-Баланс счета: ${account_balance:.2f}
+## ПРАВИЛА ОЦЕНКИ (будь строгим):
+- 0.8-1.0: Идеальный вход (ADX>40, RSI<30 или >70, тренд совпадает)
+- 0.6-0.8: Хороший вход (ADX>25, тренд совпадает, риск-менеджмент правильный)
+- 0.4-0.6: Средний вход (ADX<25, но тренд совпадает, или противоречивые индикаторы)
+- 0.2-0.4: Плохой вход (противоречие тренду, низкая волатильность)
+- 0.0-0.2: Очень плохой вход (явные противоречия, высокий риск)
 
-Ответь ТОЛЬКО JSON формате с полями score, reason, recommended_stop_pct, recommended_tp_pct:
+## ВАЖНЫЕ ЗАМЕЧАНИЯ:
+1. Если ADX < 25 - снижай оценку на 0.2 (нет тренда)
+2. Если LOW_VOLATILITY + ADX < 25 - снижай на 0.3 (боковик)
+3. Если действие ПРОТИВ тренда - снижай на 0.3
+4. Если RSI в экстремуме (<30 или >70) - повышай на 0.1
+5. Если Williams %R < -80 или > -20 - повышай на 0.1
+
+## ТРЕБОВАНИЯ К ОТВЕТУ:
+Ответь ТОЛЬКО JSON. Без пояснений, без markdown.
+
 {{
   "score": 0.0-1.0,
-  "reason": "анализ",
-  "recommended_stop_pct": 0.025,
-  "recommended_tp_pct": 0.075
+  "reason": "краткое обоснование (1-2 предложения)",
+  "recommended_stop_pct": 0.0-0.1,
+  "recommended_tp_pct": 0.0-0.2
 }}"""
-
         for attempt in range(3):
             try:
                 async with aiohttp.ClientSession() as session:
-                    headers = {
-                        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-                        "Content-Type": "application/json"
-                    }
-                    payload = {
-                        "model": "deepseek-chat",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.3,
-                        "max_tokens": 1000
-                    }
-                    async with session.post(
-                        "https://api.deepseek.com/chat/completions",
-                        json=payload,
-                        headers=headers,
-                        timeout=30
-                    ) as resp:
+                    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+                    payload = {"model": "deepseek-chat", "messages": [{"role": "user", "content": prompt}], "temperature": 0.3, "max_tokens": 1000}
+                    async with session.post("https://api.deepseek.com/chat/completions", json=payload, headers=headers, timeout=30) as resp:
                         data = await resp.json()
                         text = data['choices'][0]['message']['content']
                         result = self.parse_ai_response(text)
-
                         score = result['score']
                         reason = result['reason']
                         recommended_stop = result.get('recommended_stop_pct')
                         recommended_tp = result.get('recommended_tp_pct')
-
                         if recommended_stop is not None and recommended_tp is not None:
                             stop_pct = recommended_stop
                             tp_pct = recommended_tp
@@ -1960,23 +1725,18 @@ class AISystem:
                             stop_pct = base_stop_pct
                             tp_pct = base_tp_pct
                             logger.info(f"   ⚠️ AI не дал рекомендаций, используем базовые")
-
                         min_stop = TRADING_MODE['min_stop_pct']
                         max_stop = TRADING_MODE['max_stop_pct']
-
                         if stop_pct < min_stop:
                             stop_pct = min_stop
                         elif stop_pct > max_stop:
                             stop_pct = max_stop
-
                         rr = tp_pct / stop_pct
                         if rr < 1.5:
                             tp_pct = stop_pct * 2.0
                         elif rr > 4.0:
                             tp_pct = stop_pct * 3.0
-
                         confirm = score >= TRADING_MODE['ai_confidence_threshold']
-
                         self.cache[cache_key] = {
                             'confirm': confirm,
                             'score': score,
@@ -1986,19 +1746,15 @@ class AISystem:
                             'timestamp': datetime.now().isoformat()
                         }
                         self.save_cache()
-
                         logger.info(f"🤖 AI: {signal['symbol']} {signal['action']} -> score={score:.2f}, стоп={stop_pct*100:.1f}%, тейк={tp_pct*100:.1f}%")
                         return confirm, score, reason, stop_pct, tp_pct
-
             except asyncio.TimeoutError:
                 logger.warning(f"AI таймаут, попытка {attempt+1}/3")
                 await asyncio.sleep(1)
             except Exception as e:
                 logger.warning(f"AI ошибка: {e}, попытка {attempt+1}/3")
                 await asyncio.sleep(1)
-
         return False, 0.0, "AI временно недоступен", base_stop_pct, base_tp_pct
-
 
 # ==================== ТОРГОВАЯ СТРАТЕГИЯ ====================
 class Strategy:
@@ -2012,7 +1768,6 @@ class Strategy:
         data_30m = self.client.klines(symbol, '30', 150)
         if len(data_30m) < 80:
             return None
-        
         return {
             'symbol': symbol,
             'opens': [d['open'] for d in data_30m],
@@ -2030,18 +1785,15 @@ class Strategy:
         closes = np.array(market_data['closes'])
         highs = np.array(market_data['highs'])
         lows = np.array(market_data['lows'])
-        
         rsi = talib.RSI(closes, timeperiod=14)[-1]
         adx = talib.ADX(highs, lows, closes, timeperiod=14)[-1]
         williams = talib.WILLR(highs, lows, closes, timeperiod=14)[-1]
-        
         data_4h = self.client.klines(market_data['symbol'], '240', 100)
         if len(data_4h) > 20:
             closes_4h = [d['close'] for d in data_4h]
             ema20_4h = talib.EMA(np.array(closes_4h), timeperiod=20)[-1]
             ema50_4h = talib.EMA(np.array(closes_4h), timeperiod=50)[-1]
             price_4h = closes_4h[-1]
-            
             if price_4h > ema20_4h > ema50_4h:
                 trend = 'BULLISH'
             elif price_4h < ema20_4h < ema50_4h:
@@ -2050,63 +1802,69 @@ class Strategy:
                 trend = 'NEUTRAL'
         else:
             trend = 'NEUTRAL'
-        
-        return {
-            'rsi': rsi,
-            'adx': adx,
-            'williams': williams,
-            'trend': trend
-        }
+        return {'rsi': rsi, 'adx': adx, 'williams': williams, 'trend': trend}
 
     def calculate_dynamic_stop(self, market_data, action):
         closes = np.array(market_data['closes'])
         highs = np.array(market_data['highs'])
         lows = np.array(market_data['lows'])
-        
         atr = talib.ATR(highs, lows, closes, timeperiod=14)[-1]
         price = closes[-1]
-        
         atr_pct = atr / price
-        
         if action == 'BUY':
             stop_pct = atr_pct * 1.5
         else:
             stop_pct = atr_pct * 1.5
-        
         stop_pct = max(TRADING_MODE['min_stop_pct'], min(TRADING_MODE['max_stop_pct'], stop_pct))
-        
         return stop_pct
 
     def find_entry_signal(self, symbol, acc, coin_analyzer):
         if self.check_position(symbol):
             return None
-        
         for t in acc.history:
             if t.get('symbol') == symbol and t.get('exit') is None:
                 return None
-        
         market_data = self.get_market_data(symbol)
         if not market_data:
             return None
-        
         best_signal = self.strategy_manager.get_best_signal(market_data, symbol)
-        
         if not best_signal:
             return None
-        
         indicators = self.calculate_technical_indicators(market_data)
         best_signal.update(indicators)
         
+        # Добавляем дополнительные индикаторы для AI
+        closes = np.array(market_data['closes'])
+        highs = np.array(market_data['highs'])
+        lows = np.array(market_data['lows'])
+        
+        # EMA 20 и 50
+        ema20 = talib.EMA(closes, timeperiod=20)[-1]
+        ema50 = talib.EMA(closes, timeperiod=50)[-1]
+        best_signal['ema20'] = ema20
+        best_signal['ema50'] = ema50
+        best_signal['price_vs_ema20'] = (market_data['price'] - ema20) / ema20 * 100
+        best_signal['price_vs_ema50'] = (market_data['price'] - ema50) / ema50 * 100
+        
+        # Bollinger Bands позиция
+        upper, middle, lower = talib.BBANDS(closes, timeperiod=20, nbdevup=2, nbdevdn=2)
+        best_signal['bb_position'] = (market_data['price'] - lower[-1]) / (upper[-1] - lower[-1]) if (upper[-1] - lower[-1]) > 0 else 0.5
+        best_signal['bb_width'] = (upper[-1] - lower[-1]) / middle[-1] if middle[-1] > 0 else 0
+        
+        # Объем
+        volumes = np.array(market_data['volumes'])
+        volume_ma = talib.SMA(volumes, timeperiod=20)[-1] if len(volumes) >= 20 else volumes[-1]
+        best_signal['volume_ratio'] = volumes[-1] / volume_ma if volume_ma > 0 else 1
+        
+        logger.info(f"📊 Доп. индикаторы для {symbol}: BB_pos={best_signal['bb_position']:.2f}, Vol_ratio={best_signal['volume_ratio']:.2f}")
         stop_pct = self.calculate_dynamic_stop(market_data, best_signal['action'])
         price = market_data['price']
-        
         if best_signal['action'] == 'BUY':
             stop = price * (1 - stop_pct)
             tp = price * (1 + stop_pct * 2)
         else:
             stop = price * (1 + stop_pct)
             tp = price * (1 - stop_pct * 2)
-        
         best_signal.update({
             'symbol': symbol,
             'price': price,
@@ -2117,43 +1875,34 @@ class Strategy:
             'rr': 2.0,
             'is_qualified': coin_analyzer.is_qualified(symbol)
         })
-        
         return best_signal
 
     def position_size(self, symbol, price, stop_pct, action, acc, is_real_trade=False):
         bal = acc.balance
         if bal <= 0:
             return MIN_ORDER_SIZES.get(symbol, 0.1), 0, 0, 1
-        
         if is_real_trade:
             risk_percent = REAL_TRADING_CRITERIA['risk_percent_real']
         elif acc.is_demo():
             risk_percent = TRADING_MODE['risk_percent_demo']
         else:
             risk_percent = 0.3
-        
         risk_amount_usdt = bal * (risk_percent / 100)
         position_with_leverage = risk_amount_usdt / stop_pct
-        
         target_margin_percent = 35.0
         leverage = target_margin_percent / (stop_pct * 100)
         leverage = max(2, min(12, round(leverage)))
-        
         margin = position_with_leverage / leverage
         size = position_with_leverage / price
-        
         mn = MIN_ORDER_SIZES.get(symbol, 0.1)
         size = max(mn, size)
         st = ORDER_STEPS.get(symbol, 0.1)
         size = round(size / st) * st
-        
         actual_position_with_leverage = size * price
         actual_leverage = actual_position_with_leverage / margin if margin > 0 else leverage
         actual_risk_amount = actual_position_with_leverage * stop_pct
         actual_risk_percent = (actual_risk_amount / bal) * 100
-        
         return size, actual_risk_percent, actual_risk_amount, actual_leverage
-
 
 # ==================== ОСНОВНОЙ БОТ ====================
 class TradingBot:
@@ -2175,14 +1924,10 @@ class TradingBot:
         if not self.acc_mgr.clients:
             logger.error("❌ Нет активных клиентов")
             return
-        
         self.sync_all_positions()
-        
         for n, c in self.acc_mgr.clients.items():
             self.strategies[n] = Strategy(c, self, n)
-        
         self.load_history()
-        
         logger.info("✅ Бот готов")
         logger.info("📊 Стратегий загружено: 12 (MA, ADX, RSI Div, BB, Volume, Candle, S/R, Fib, MACD, Double, Ichimoku, MeanRev)")
         logger.info(f"🎯 Риск для демо: {TRADING_MODE['risk_percent_demo']}% от баланса")
@@ -2194,13 +1939,10 @@ class TradingBot:
         for n, a in self.acc_mgr.accounts.items():
             if not a.active:
                 continue
-
             logger.info(f"🔄 Синхронизация для {n}...")
             c = self.acc_mgr.clients[n]
-
             exchange_positions = c.positions()
             exchange_symbols = {p['symbol'] for p in exchange_positions}
-            
             a.positions.clear()
             for pos in exchange_positions:
                 sym = pos['symbol']
@@ -2213,20 +1955,16 @@ class TradingBot:
                     'tp': None,
                     'order_id': None
                 }
-            
             updated = 0
             for trade in a.history:
                 if trade.get('exit') is not None:
                     continue
-                
                 sym = trade.get('symbol')
                 if sym in exchange_symbols:
                     continue
-                
                 entry_price = trade.get('entry')
                 if entry_price:
                     closed = c.get_closed_trade(sym, entry_price=float(entry_price), hours_back=168)
-                    
                     if closed:
                         trade['exit'] = float(closed['exit'])
                         try:
@@ -2236,12 +1974,10 @@ class TradingBot:
                             trade['exit_time'] = datetime.now().isoformat()
                         trade['reason'] = "TAKE_PROFIT" if closed['pnl'] > 0 else "STOP_LOSS"
                         trade['net'] = float(closed['pnl'])
-                        
                         entry = float(trade['entry'])
                         size = float(trade['size'])
                         side = trade['side']
                         exit_price = float(closed['exit'])
-                        
                         if side == "BUY":
                             gross = size * (exit_price - entry)
                         else:
@@ -2249,9 +1985,7 @@ class TradingBot:
                         comm = size * entry * EXCHANGE_COMMISSION + size * exit_price * EXCHANGE_COMMISSION
                         trade['gross'] = gross
                         trade['commission'] = comm
-                        
                         logger.info(f"   ✅ {sym}: закрыта | P&L: ${closed['pnl']:+.2f}")
-                        
                         profit_emoji = "📈" if closed['pnl'] > 0 else "📉"
                         email_body = f"""{profit_emoji} СДЕЛКА ЗАКРЫТА (синхронизация)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2269,26 +2003,21 @@ P&L: ${closed['pnl']:+.2f}
 Комиссия: ${comm:.4f}
 """
                         send_email(f"{profit_emoji} ЗАКРЫТА {a.display()} {sym} {trade['reason']}", email_body)
-                        
                         updated += 1
-            
             if updated > 0:
                 logger.info(f"✅ {n}: синхронизировано {updated} закрытых сделок")
                 self.save_history(n)
-            
             logger.info(f"📊 {n}: открыто {len(a.positions)} позиций")
 
     def load_history(self):
         self.coin_analyzer.processed_trades = set()
         self.coin_analyzer.processed_keys = set()
-        
         for n, a in self.acc_mgr.accounts.items():
             f = os.path.join(DATA_DIR, f"history_{n}.json")
             if os.path.exists(f):
                 with open(f, 'r') as fp:
                     a.history = json.load(fp)
                 logger.info(f"📂 История {n}: {len(a.history)} записей")
-                
                 closed_count = 0
                 for trade in a.history:
                     if trade.get('exit'):
@@ -2304,16 +2033,12 @@ P&L: ${closed['pnl']:+.2f}
     def print_status(self):
         logger.info("=" * 60)
         logger.info("📊 СТАТУС ОБУЧЕНИЯ ПО МОНЕТАМ:")
-        
         qualified = self.coin_analyzer.get_qualified_coins()
         logger.info(f"   Квалифицировано монет: {len(qualified)}/{len(SYMBOLS)}")
-        
-        for symbol, stats in sorted(self.coin_analyzer.coin_stats.items(), 
-                                    key=lambda x: x[1]['total_trades'], reverse=True)[:15]:
+        for symbol, stats in sorted(self.coin_analyzer.coin_stats.items(), key=lambda x: x[1]['total_trades'], reverse=True)[:15]:
             status = "✅" if stats.get('qualified') else "⏳"
             needed = max(0, REAL_TRADING_CRITERIA['min_trades_per_coin'] - stats['total_trades'])
             logger.info(f"   {status} {symbol:10} | Сделок: {stats['total_trades']:3} | Винрейт: {stats['winrate']:5.1f}% | Нужно еще: {needed}")
-        
         logger.info("=" * 60)
 
     async def daily_report(self):
@@ -2323,18 +2048,14 @@ P&L: ${closed['pnl']:+.2f}
             if now >= target:
                 target += timedelta(days=1)
             await asyncio.sleep((target - now).total_seconds())
-            
             all_trades = []
             for a in self.acc_mgr.accounts.values():
                 all_trades.extend(a.history)
-            
             excel_file = self.coin_analyzer.generate_excel_report(all_trades)
-            
             lines = ["=" * 60]
             lines.append(f"ОТЧЁТ ПО ТОРГОВЛЕ - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
             lines.append("=" * 60)
             lines.append("")
-            
             for n, a in self.acc_mgr.accounts.items():
                 if not a.active:
                     continue
@@ -2344,16 +2065,13 @@ P&L: ${closed['pnl']:+.2f}
                 lines.append(f"📊 {a.display()} ({n}): ${a.balance:.2f}")
                 lines.append(f"   Сделок: {len(closed)}, Винрейт: {(wins/len(closed)*100 if closed else 0):.1f}%, Прибыль: ${profit:+.2f}")
                 lines.append("")
-            
             lines.append(f"💰 Суммарный баланс: ${sum(a.balance for a in self.acc_mgr.accounts.values() if a.active):.2f}")
             lines.append("")
-            
             qualified = self.coin_analyzer.get_qualified_coins()
             lines.append(f"🎯 МОНЕТЫ, ГОТОВЫЕ К РЕАЛЬНОЙ ТОРГОВЛЕ: {len(qualified)}")
             for sym in qualified[:10]:
                 stats = self.coin_analyzer.coin_stats[sym]
                 lines.append(f"   ✅ {sym}: {stats['total_trades']} сделок, винрейт {stats['winrate']:.1f}%")
-            
             body = "\n".join(lines)
             send_email(f"Торговый отчёт {datetime.now().strftime('%Y-%m-%d')}", body, excel_file)
             logger.info("✅ Ежедневный отчет отправлен")
@@ -2361,31 +2079,24 @@ P&L: ${closed['pnl']:+.2f}
     async def cycle_loop(self):
         cycle_count = 0
         asyncio.create_task(self.daily_report())
-        
         while not self.shutdown:
             try:
                 cycle_count += 1
                 self.acc_mgr.update_balances()
-                
                 for n, s in self.strategies.items():
                     a = self.acc_mgr.accounts[n]
                     if not a.active:
                         continue
-                    
                     if not a.is_demo():
                         logger.info(f"⏸️ {a.display()} ({n}) - реальный аккаунт, торговля отключена до обучения ML")
                         continue
-                    
                     self.acc_mgr.switch(n)
                     logger.info(f"🔄 Цикл {n} (баланс: ${a.balance:.2f}) | Позиций: {len(a.positions)}")
-                    
                     await self.check_closed_positions(n)
                     await self.monitor_sltp(n)
                     await self.signals(n)
-                
                 if cycle_count % 10 == 0:
                     self.print_status()
-                
                 await asyncio.sleep(TRADING_MODE['cycle_sleep'])
             except Exception as e:
                 logger.error(f"Ошибка цикла: {e}")
@@ -2395,10 +2106,8 @@ P&L: ${closed['pnl']:+.2f}
     async def check_closed_positions(self, name):
         s = self.strategies[name]
         a = self.acc_mgr.accounts[name]
-        
         exchange_positions = s.client.positions()
         exchange_symbols = {p['symbol'] for p in exchange_positions}
-        
         for sym in list(a.positions.keys()):
             if sym not in exchange_symbols:
                 logger.info(f"🔔 {name} {sym} закрыта на бирже")
@@ -2414,7 +2123,6 @@ P&L: ${closed['pnl']:+.2f}
     async def monitor_sltp(self, name):
         s = self.strategies[name]
         a = self.acc_mgr.accounts[name]
-        
         for sym, pos_data in list(a.positions.items()):
             price = s.client.price(sym)
             if price == 0:
@@ -2442,28 +2150,20 @@ P&L: ${closed['pnl']:+.2f}
     async def signals(self, name):
         s = self.strategies[name]
         a = self.acc_mgr.accounts[name]
-        
         signals = []
         for sym in SYMBOLS:
             if sym in a.positions:
                 continue
-            
             sig = s.find_entry_signal(sym, a, self.coin_analyzer)
             if not sig:
                 continue
-            
-            size, risk_percent, risk_amount, lev = s.position_size(
-                sym, sig['price'], sig['stop_pct'], sig['action'], a, False
-            )
-            
+            size, risk_percent, risk_amount, lev = s.position_size(sym, sig['price'], sig['stop_pct'], sig['action'], a, False)
             sig['size'] = size
             sig['risk_percent'] = risk_percent
             sig['risk_amount_usdt'] = risk_amount
             sig['lev'] = lev
             signals.append(sig)
-        
         signals.sort(key=lambda x: x.get('total_score', x['confidence']), reverse=True)
-        
         for sig in signals[:TRADING_MODE['max_trades_per_cycle']]:
             await self.open_trade(name, sig)
 
@@ -2471,75 +2171,58 @@ P&L: ${closed['pnl']:+.2f}
         s = self.strategies[name]
         a = self.acc_mgr.accounts[name]
         sym = sig['symbol']
-
         if s.check_position(sym):
             return
-
         market = s.get_market_data(sym)
         ml_prob = self.ml.predict(market, sig['action']) if market else 0.5
         if ml_prob < TRADING_MODE['ml_decision_threshold']:
             logger.info(f"ML отклонил {sym}: {ml_prob:.2f}")
             return
-
         confirm, ai_score, ai_reason, ai_stop_pct, ai_tp_pct = await self.ai.confirm(sig, a.balance)
-
         if not confirm:
-            logger.info(f"AI отклонил {sym}: {ai_score:.2f} - {ai_reason[:100]}")
+            logger.info(f"AI отклонил {sym}: {ai_score:.2f} - {ai_reason[:3000]}")
             return
-        
         if ai_stop_pct is not None and ai_tp_pct is not None:
             old_stop = sig["stop_pct"]
             old_tp = sig["tp_pct"]
             sig["stop_pct"] = ai_stop_pct
             sig["tp_pct"] = ai_tp_pct
             logger.info(f"   ✅ AI оптимизировал уровни: стоп {old_stop*100:.1f}% → {ai_stop_pct*100:.1f}%, тейк {old_tp*100:.1f}% → {ai_tp_pct*100:.1f}%")
-            
             if sig["action"] == "BUY":
                 sig["stop"] = sig["price"] * (1 - sig["stop_pct"])
                 sig["tp"] = sig["price"] * (1 + sig["tp_pct"])
             else:
                 sig["stop"] = sig["price"] * (1 + sig["stop_pct"])
                 sig["tp"] = sig["price"] * (1 - sig["tp_pct"])
-            
-            size, risk_percent, risk_amount, lev = s.position_size(
-                sym, sig["price"], sig["stop_pct"], sig["action"], a, False
-            )
+            size, risk_percent, risk_amount, lev = s.position_size(sym, sig["price"], sig["stop_pct"], sig["action"], a, False)
             sig["size"] = size
             sig["risk_percent"] = risk_percent
             sig["risk_amount_usdt"] = risk_amount
             sig["lev"] = lev
-
         s.client.leverage(sym, sig['lev'])
         side = "Buy" if sig['action'] == "BUY" else "Sell"
         res = s.client.order(sym, side, sig['size'], sig['stop'], sig['tp'], sig['lev'])
-        
         if res.get('ok'):
             order_id = res.get('id')
             await asyncio.sleep(3)
-            
             real_price = None
             real_qty = None
-            
             if order_id:
                 order_fill = s.client.get_order_fill(order_id)
                 if order_fill and order_fill['avg_price'] > 0:
                     real_price = order_fill['avg_price']
                     real_qty = order_fill['executed_qty']
                     logger.info(f"✅ {name}: {sym} {sig['action']} открыта | Цена: {real_price:.6f} | Плечо: {sig['lev']}x")
-            
             if real_price is None:
                 real_price = sig['price']
                 real_qty = sig['size']
-            
             if sig['action'] == "BUY":
                 real_stop = real_price * (1 - sig['stop_pct'])
                 real_tp = real_price * (1 + sig['tp_pct'])
             else:
                 real_stop = real_price * (1 + sig['stop_pct'])
                 real_tp = real_price * (1 - sig['tp_pct'])
-            
             position_value = real_qty * real_price
-            
             a.positions[sym] = {
                 'side': side,
                 'entry': real_price,
@@ -2549,7 +2232,6 @@ P&L: ${closed['pnl']:+.2f}
                 'tp': real_tp,
                 'order_id': order_id
             }
-
             trade_id = f"{name}_{sym}_{int(time.time())}_{real_price:.8f}"
             trade = {
                 'id': trade_id,
@@ -2566,7 +2248,7 @@ P&L: ${closed['pnl']:+.2f}
                 'risk_amount_usdt': sig['risk_amount_usdt'],
                 'ml_prob': ml_prob,
                 'ai_score': ai_score,
-                'ai_reason': ai_reason[:300],
+                'ai_reason': ai_reason[:3000],
                 'strategy': sig.get('strategy', ''),
                 'market_regime': sig.get('market_regime', ''),
                 'trend': sig.get('trend', ''),
@@ -2577,7 +2259,6 @@ P&L: ${closed['pnl']:+.2f}
             }
             a.history.append(trade)
             self.save_history(name)
-            
             side_emoji = "🟢" if sig['action'] == "BUY" else "🔴"
             body = f"""
 {side_emoji} СДЕЛКА ОТКРЫТА
@@ -2610,7 +2291,7 @@ RSI: {sig.get('rsi', 50):.1f} | Williams %R: {sig.get('williams', 0):.0f}
 Баланс: ${a.balance:.2f}
 
 🤖 AI ОЦЕНКА: {ai_score:.2f}
-{ai_reason[:300]}
+{ai_reason[:3000]}
 """
             send_email(f"{side_emoji} ОТКРЫТА {a.display()} {sym} {sig['action']}", body)
         else:
@@ -2619,41 +2300,33 @@ RSI: {sig.get('rsi', 50):.1f} | Williams %R: {sig.get('williams', 0):.0f}
     async def close_position(self, name, sym, reason, price, existing_trade=None):
         s = self.strategies[name]
         a = self.acc_mgr.accounts[name]
-        
         if existing_trade is None:
             for t in a.history:
                 if t.get('symbol') == sym and t.get('exit') is None:
                     existing_trade = t
                     break
-        
         if existing_trade is None:
             logger.warning(f"Не найдена сделка {sym} в истории")
             return
-        
         entry = existing_trade['entry']
         size = existing_trade['size']
         side = existing_trade['side']
-        
         if side == "BUY":
             gross = size * (price - entry)
         else:
             gross = size * (entry - price)
         comm = size * entry * EXCHANGE_COMMISSION + size * price * EXCHANGE_COMMISSION
         net = gross - comm
-        
         existing_trade['exit'] = price
         existing_trade['exit_time'] = datetime.now().isoformat()
         existing_trade['reason'] = reason
         existing_trade['net'] = net
         existing_trade['gross'] = gross
         existing_trade['commission'] = comm
-        
         self.save_history(name)
         self.coin_analyzer.update_from_trade(existing_trade)
-        
         if sym in a.positions:
             del a.positions[sym]
-        
         profit_emoji = "📈" if net > 0 else "📉"
         body = f"""
 {profit_emoji} СДЕЛКА ЗАКРЫТА
@@ -2676,29 +2349,24 @@ P&L: ${net:+.2f}
 
     async def close_position_with_data(self, name, sym, closed_data, existing_trade=None):
         a = self.acc_mgr.accounts[name]
-        
         if existing_trade is None:
             for t in a.history:
                 if t.get('symbol') == sym and t.get('exit') is None:
                     existing_trade = t
                     break
-        
         if existing_trade is None:
             logger.warning(f"Не найдена сделка {sym} в истории")
             return
-        
         entry = existing_trade['entry']
         size = existing_trade['size']
         side = existing_trade['side']
         exit_price = closed_data['exit']
         pnl = closed_data['pnl']
-        
         if side == "BUY":
             gross = size * (exit_price - entry)
         else:
             gross = size * (entry - exit_price)
         comm = size * entry * EXCHANGE_COMMISSION + size * exit_price * EXCHANGE_COMMISSION
-        
         existing_trade['exit'] = exit_price
         try:
             time_val = int(closed_data['time']) if isinstance(closed_data['time'], str) else closed_data['time']
@@ -2709,13 +2377,10 @@ P&L: ${net:+.2f}
         existing_trade['net'] = pnl
         existing_trade['gross'] = gross
         existing_trade['commission'] = comm
-        
         self.save_history(name)
         self.coin_analyzer.update_from_trade(existing_trade)
-        
         if sym in a.positions:
             del a.positions[sym]
-        
         profit_emoji = "📈" if pnl > 0 else "📉"
         body = f"""
 {profit_emoji} СДЕЛКА ЗАКРЫТА
@@ -2736,21 +2401,16 @@ P&L: ${pnl:+.2f}
         send_email(f"{profit_emoji} ЗАКРЫТА {a.display()} {sym} {existing_trade['reason']}", body)
         logger.info(f"✅ {name} {sym} закрыта | {existing_trade['reason']} | P&L: ${pnl:+.2f}")
 
-
 # ==================== ЗАПУСК ====================
 async def main():
     bot = TradingBot()
-    
     def signal_handler():
         logger.info("🛑 Получен сигнал остановки...")
         bot.shutdown = True
-    
     import signal
     signal.signal(signal.SIGINT, lambda s, f: signal_handler())
     signal.signal(signal.SIGTERM, lambda s, f: signal_handler())
-    
     await bot.cycle_loop()
-
 
 if __name__ == "__main__":
     try:
