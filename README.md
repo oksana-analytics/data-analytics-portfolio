@@ -1,6 +1,6 @@
 # Привет! Я Оксана Петрова 👋
 
-<img src="oksana.jpg" alt="Оксана Петрова" width="200" align="right" style="border-radius: 50%; margin-left: 20px;">
+<img src="oksana" alt="Оксана Петрова" width="200" align="right" style="border-radius: 50%; margin-left: 20px;">
 
 Добро пожаловать в мое портфолио аналитика данных.
 
