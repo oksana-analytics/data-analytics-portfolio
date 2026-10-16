@@ -19,22 +19,20 @@
 
 ## 📁 Проекты
 
-| Название проекта | Описание | Стек | Ссылка |
-| :--- | :--- | :--- | :--- |
-| 🤖 Crypto Trading Bot | Мульти-аккаунтный торговый бот для криптовалют, объединяющий технический анализ, машинное обучение и AI-верификацию (DeepSeek). Результат на демо-счете: винрейт 67.8%, Profit Factor 2.15. | Python, Bybit API, Scikit-learn, DeepSeek API, Pandas, asyncio | crypto_trading_bot |
-| 🤖 Telegram-бот для записи на услуги | Демонстрационный бот с меню, кнопками и сохранением данных в SQLite. Уведомления администратора. | Python, pyTelegramBotAPI, SQLite, python-dotenv | booking-telegram-bot |
-| Анализ надежности заемщиков банка | Анализ влияния семейного положения, дохода и других факторов на возврат кредита. Предобработка данных, категоризация признаков. | Python (Pandas, NumPy) | borrower_reliability_analysis |
-| Исследование объявлений о продаже квартир | Анализ рынка недвижимости Санкт-Петербурга и области: выявление факторов, влияющих на стоимость, определение аномалий. | Python (Pandas, Matplotlib) | apartment_listings_analysis |
-| Статистический анализ данных сервиса аренды самокатов GoFast | Анализ поведения пользователей, проверка гипотез о влиянии подписки на расстояние поездок и выручку. | Python (Pandas, SciPy) | gofast_scooter_analysis |
-| Анализ рынка компьютерных игр | Исследование исторических данных о продажах игр, выявление закономерностей, определение прибыльных платформ и жанров. | Python (Pandas, Matplotlib, Seaborn) | games_market_analysis |
-| Анализ бизнес-показателей приложения Procrastinate Pro+ | Маркетинговый анализ: расчет LTV, CAC, ROI, когортный анализ, выявление причин убытков. | Python (Pandas, Matplotlib, Seaborn) | procrastinate_pro_analysis |
-| Анализ результатов A/B-теста для интернет-магазина | Оценка корректности проведения A/B-теста, проверка гипотез о различиях в поведении пользователей. | Python (Pandas, NumPy, Matplotlib, SciPy) | ab_test_online_store |
-| Анализ поведения пользователей мобильного приложения | Анализ воронки продаж, исследование результатов A/A/B-теста по смене шрифтов. | Python (Pandas, Matplotlib, Seaborn, SciPy) | mobile_app_funnel_analysis |
-| Анализ рынка заведений общественного питания Москвы | Исследование рынка общепита: структура заведений по районам, адреса, сетевые и несетевые заведения. Визуализация на карте города. | Python (Pandas, Matplotlib, Seaborn, Plotly, Folium) | moscow_restaurants_market |
-| Анализ поведения пользователей мобильного приложения "Ненужные вещи" | Анализ поведения пользователей, воронка продаж, исследование результатов A/B-теста. | Python (Pandas, Matplotlib, Seaborn, SciPy, Plotly) | unnecessary_things_app |
-| Анализ книжной базы данных | Анализ книжной базы данных с помощью SQL и Python. Написание сложных запросов, объединение таблиц, агрегация данных. | Python (Pandas, SQLAlchemy), PostgreSQL | books_database_analysis |
-
-*Проекты 1–10 выполнены в рамках обучения в Яндекс.Практикуме. Crypto Trading Bot и Telegram-бот для записи на услуги — самостоятельные разработки.*
+| Название проекта | Описание | Стек |
+| :--- | :--- | :--- |
+| [🤖 Crypto Trading Bot](https://github.com/oksana-analytics/crypto_trading_bot) | Мульти-аккаунтный торговый бот для криптовалют, объединяющий технический анализ, машинное обучение и AI-верификацию (DeepSeek). Результат на демо-счете: винрейт 67.8%, Profit Factor 2.15. | Python, Bybit API, Scikit-learn, DeepSeek API, Pandas, asyncio |
+| [🤖 Telegram-бот для записи на услуги](https://github.com/oksana-analytics/booking-telegram-bot) | Демонстрационный бот с меню, кнопками и сохранением данных в SQLite. Уведомления администратора. | Python, pyTelegramBotAPI, SQLite, python-dotenv |
+| [Анализ надежности заемщиков банка](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/borrower_reliability_analysis) | Анализ влияния семейного положения, дохода и других факторов на возврат кредита. Предобработка данных, категоризация признаков. | Python (Pandas, NumPy) |
+| [Исследование объявлений о продаже квартир](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/apartment_listings_analysis) | Анализ рынка недвижимости Санкт-Петербурга и области: выявление факторов, влияющих на стоимость, определение аномалий. | Python (Pandas, Matplotlib) |
+| [Статистический анализ данных сервиса аренды самокатов GoFast](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/gofast_scooter_analysis) | Анализ поведения пользователей, проверка гипотез о влиянии подписки на расстояние поездок и выручку. | Python (Pandas, SciPy) |
+| [Анализ рынка компьютерных игр](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/games_market_analysis) | Исследование исторических данных о продажах игр, выявление закономерностей, определение прибыльных платформ и жанров. | Python (Pandas, Matplotlib, Seaborn) |
+| [Анализ бизнес-показателей приложения Procrastinate Pro+](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/procrastinate_pro_analysis) | Маркетинговый анализ: расчет LTV, CAC, ROI, когортный анализ, выявление причин убытков. | Python (Pandas, Matplotlib, Seaborn) |
+| [Анализ результатов A/B-теста для интернет-магазина](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/ab_test_online_store) | Оценка корректности проведения A/B-теста, проверка гипотез о различиях в поведении пользователей. | Python (Pandas, NumPy, Matplotlib, SciPy) |
+| [Анализ поведения пользователей мобильного приложения](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/mobile_app_funnel_analysis) | Анализ воронки продаж, исследование результатов A/A/B-теста по смене шрифтов. | Python (Pandas, Matplotlib, Seaborn, SciPy) |
+| [Анализ рынка заведений общественного питания Москвы](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/moscow_restaurants_market) | Исследование рынка общепита: структура заведений по районам, адреса, сетевые и несетевые заведения. Визуализация на карте города. | Python (Pandas, Matplotlib, Seaborn, Plotly, Folium) |
+| [Анализ поведения пользователей мобильного приложения "Ненужные вещи"](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/unnecessary_things_app) | Анализ поведения пользователей, воронка продаж, исследование результатов A/B-теста. | Python (Pandas, Matplotlib, Seaborn, SciPy, Plotly) |
+| [Анализ книжной базы данных](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/books_database_analysis) | Анализ книжной базы данных с помощью SQL и Python. Написание сложных запросов, объединение таблиц, агрегация данных. | Python (Pandas, SQLAlchemy), PostgreSQL |
 
 ## 📄 Документы
 
