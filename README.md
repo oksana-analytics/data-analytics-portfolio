@@ -30,7 +30,7 @@
 | **Анализ поведения пользователей мобильного приложения "Ненужные вещи"** | Анализ поведения пользователей, воронка продаж, исследование результатов A/B-теста. | Python (Pandas, Matplotlib, Seaborn, SciPy, Plotly) | [project_9_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_9_preprocessing) |
 | **Анализ книжной базы данных** | Анализ книжной базы данных с помощью SQL и Python. Написание сложных запросов, объединение таблиц, агрегация данных. | Python (Pandas, SQLAlchemy), PostgreSQL | [project_10_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_10_preprocessing) |
 | **🤖 Crypto Trading Bot** | Мульти-аккаунтный торговый бот для криптовалют, объединяющий технический анализ, машинное обучение и AI-верификацию (DeepSeek). Результат на демо-счете: винрейт 67.8%, Profit Factor 2.15. | Python, Bybit API, Scikit-learn, DeepSeek API, Pandas, asyncio | [crypto_trading_bot](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/crypto_trading_bot) |
-
+| **🤖 Telegram-бот для записи на услуги** | Демонстрационный бот с меню, кнопками и сохранением данных в SQLite. Уведомления администратора. | Python, pyTelegramBotAPI, SQLite, python-dotenv | [booking-telegram-bot](https://github.com/oksana-analytics/booking-telegram-bot) |
 *Проекты 1–10 выполнены в рамках обучения в Яндекс.Практикуме. Проект 11 — самостоятельная разработка.*
 
 ## 📄 Документы
