@@ -12,10 +12,10 @@
 | **BI и визуализация** | Power BI, Yandex DataLens, Power Query, Power Pivot, Excel (эксперт) |
 | **Анализ данных** | A/B-тестирование, статистический анализ, предобработка данных, декомпозиция метрик, когортный анализ |
 | **Машинное обучение** | Scikit-learn (Random Forest, SMOTE) |
-| **Автоматизация и AI** | Разработка торговых ботов, интеграция с AI (DeepSeek), работа с API бирж, асинхронное программирование |
-| **Другое** | Jupyter Notebook, Folium, 1С, Oracle HR, управление проектами |
+| **Автоматизация и AI** | Разработка торговых и Telegram-ботов, интеграция с AI (DeepSeek), работа с API бирж, Telegram Bot API (pyTelegramBotAPI), SQLite, python-dotenv, асинхронное программирование |
 | **Разработка ботов** | Telegram Bot API (pyTelegramBotAPI), SQLite, python-dotenv, асинхронное программирование |
-| **Автоматизация и AI** | Разработка торговых и Telegram-ботов, интеграция с AI (DeepSeek), работа с API бирж, асинхронное программирование |
+| **Другое** | Jupyter Notebook, Folium, 1С, Oracle HR, управление проектами |
+
 
 ## 📁 Проекты
 
