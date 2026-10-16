@@ -14,11 +14,15 @@
 | **Машинное обучение** | Scikit-learn (Random Forest, SMOTE) |
 | **Автоматизация и AI** | Разработка торговых ботов, интеграция с AI (DeepSeek), работа с API бирж, асинхронное программирование |
 | **Другое** | Jupyter Notebook, Folium, 1С, Oracle HR, управление проектами |
+| **Разработка ботов** | Telegram Bot API (pyTelegramBotAPI), SQLite, python-dotenv, асинхронное программирование |
+| **Автоматизация и AI** | Разработка торговых и Telegram-ботов, интеграция с AI (DeepSeek), работа с API бирж, асинхронное программирование |
 
 ## 📁 Проекты
 
 | Название проекта | Описание | Стек | Ссылка |
 | :--- | :--- | :--- | :--- |
+| **🤖 Crypto Trading Bot** | Мульти-аккаунтный торговый бот для криптовалют, объединяющий технический анализ, машинное обучение и AI-верификацию (DeepSeek). Результат на демо-счете: винрейт 67.8%, Profit Factor 2.15. | Python, Bybit API, Scikit-learn, DeepSeek API, Pandas, asyncio | [crypto_trading_bot](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/crypto_trading_bot) |
+| **🤖 Telegram-бот для записи на услуги** | Демонстрационный бот с меню, кнопками и сохранением данных в SQLite. Уведомления администратора. | Python, pyTelegramBotAPI, SQLite, python-dotenv | [booking-telegram-bot](https://github.com/oksana-analytics/booking-telegram-bot) |
 | **Анализ надежности заемщиков банка** | Анализ влияния семейного положения, дохода и других факторов на возврат кредита. Предобработка данных, категоризация признаков. | Python (Pandas, NumPy) | [project_1_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_1_preprocessing) |
 | **Исследование объявлений о продаже квартир** | Анализ рынка недвижимости Санкт-Петербурга и области: выявление факторов, влияющих на стоимость, определение аномалий. | Python (Pandas, Matplotlib) | [project_2_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_2_preprocessing) |
 | **Статистический анализ данных сервиса аренды самокатов GoFast** | Анализ поведения пользователей, проверка гипотез о влиянии подписки на расстояние поездок и выручку. | Python (Pandas, SciPy) | [project_3_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_3_preprocessing) |
@@ -29,8 +33,7 @@
 | **Анализ рынка заведений общественного питания Москвы** | Исследование рынка общепита: структура заведений по районам, адреса, сетевые и несетевые заведения. Визуализация на карте города. | Python (Pandas, Matplotlib, Seaborn, Plotly, Folium) | [project_8_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_8_preprocessing) |
 | **Анализ поведения пользователей мобильного приложения "Ненужные вещи"** | Анализ поведения пользователей, воронка продаж, исследование результатов A/B-теста. | Python (Pandas, Matplotlib, Seaborn, SciPy, Plotly) | [project_9_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_9_preprocessing) |
 | **Анализ книжной базы данных** | Анализ книжной базы данных с помощью SQL и Python. Написание сложных запросов, объединение таблиц, агрегация данных. | Python (Pandas, SQLAlchemy), PostgreSQL | [project_10_preprocessing](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/project_10_preprocessing) |
-| **🤖 Crypto Trading Bot** | Мульти-аккаунтный торговый бот для криптовалют, объединяющий технический анализ, машинное обучение и AI-верификацию (DeepSeek). Результат на демо-счете: винрейт 67.8%, Profit Factor 2.15. | Python, Bybit API, Scikit-learn, DeepSeek API, Pandas, asyncio | [crypto_trading_bot](https://github.com/oksana-analytics/data-analytics-portfolio/tree/main/crypto_trading_bot) |
-| **🤖 Telegram-бот для записи на услуги** | Демонстрационный бот с меню, кнопками и сохранением данных в SQLite. Уведомления администратора. | Python, pyTelegramBotAPI, SQLite, python-dotenv | [booking-telegram-bot](https://github.com/oksana-analytics/booking-telegram-bot) |
+
 *Проекты 1–10 выполнены в рамках обучения в Яндекс.Практикуме. Проект 11 — самостоятельная разработка.*
 
 ## 📄 Документы
